@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            name="InstantFeedback"
+            id="InstantFeedback">
+      </category>
+      <view
+            name="Instant Feedback View"
+            icon="icons/sample.gif"
+            category="InstantFeedback"
+            class="kr.ac.jbnu.ssel.instantfeedback.views.InstantFeedbackView"
+            id="kr.ac.jbnu.ssel.instantfeedback.views.InstantFeedbackView">
+      </view>
+   </extension>
+   
+   <extension
+         id="kr.ac.jbnu.ssel.instantfeedback.preferences.InstantFeedbackPreference"
+         point="org.eclipse.ui.preferencePages">
+         <page name="InstantFeedback" class = "kr.ac.jbnu.ssel.instantfeedback.preferences.InstantFeedbackPreference"
+         id="kr.ac.jbnu.ssel.instantfeedback.preferences.InstantFeedbackPreference"/>
+   </extension>
+<!--
+   <extension
+         id="application"
+         point="org.eclipse.core.runtime.applications">
+      <application>
+         <run
+               class="org.eclipse.ui.tutorials.rcp.part2.Application">
+         </run>
+      </application>
+   </extension>
+-->
+</plugin>
