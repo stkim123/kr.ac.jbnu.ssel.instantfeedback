@@ -4,16 +4,22 @@ import org.eclipse.draw2d.LightweightSystem;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.nebula.visualization.widgets.figures.MeterFigure;
 import org.eclipse.nebula.visualization.xygraph.util.XYGraphMediaFactory;
+import org.eclipse.nebula.widgets.grid.Grid;
+import org.eclipse.nebula.widgets.grid.GridColumn;
+import org.eclipse.nebula.widgets.grid.GridColumnGroup;
+import org.eclipse.nebula.widgets.grid.GridItem;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.part.ViewPart;
 
 import kr.ac.jbnu.ssel.instantfeedback.domain.Readability;
+import test.view.SWTImageCanvas;
 
 public class GaugeView extends ViewPart
 {
@@ -25,23 +31,51 @@ public class GaugeView extends ViewPart
 
 	private ReadabilityScore methodReadability;
 	private Readability readabilityInfo;
+	private MeterFigure readabilityGauge;
+	private Label methodLabel;
 
 	@Override
 	public void createPartControl(Composite parent) {
-		// GridLayout layout = new GridLayout(2, false);
-		GridLayout layout = new GridLayout(1, true);
-		parent.setLayout(layout);
-		parent.setLayoutData(new GridData(GridData.FILL));
+		
+	    FillLayout fillLayout = new FillLayout(SWT.VERTICAL);
+	    fillLayout.marginHeight = 1;
+	    fillLayout.marginWidth = 5;
+	    fillLayout.spacing = 1;
+	    parent.setLayout(fillLayout);
+	    
+		SashForm sashForm = new SashForm(parent, SWT.VERTICAL);
 
-		methodReadability = new ReadabilityScore(parent, SWT.NONE);
-		GridData gridData = new GridData();
-		gridData.horizontalAlignment = GridData.FILL;
-		gridData.verticalAlignment = GridData.FILL;
-		gridData.horizontalSpan = 2;
-		gridData.grabExcessHorizontalSpace = true;
-		gridData.grabExcessVerticalSpace = true;
-		methodReadability.setLayoutData(gridData);
+		//////////////////////////////////////////////////////////////////////////
+		// put empty label for margin
+//		methodLabel = new Label(sashForm, SWT.LEFT);
+//		methodLabel.setText("");
+		
+		//////////////////////////////////////////////////////////////////////////
+		methodLabel = new Label(sashForm, SWT.LEFT);
+		FontDescriptor boldDescriptor = FontDescriptor.createFrom(methodLabel.getFont()).setStyle(SWT.BOLD);
+		Font boldFont = boldDescriptor.createFont(methodLabel.getDisplay());
+		methodLabel.setFont(boldFont);
+		methodLabel.setText("methodName");
+		
+		//////////////////////////////////////////////////////////////////////////
+		final Canvas canvas = new Canvas(sashForm, SWT.NONE);
+		LightweightSystem lws = new LightweightSystem(canvas);
+		readabilityGauge = new MeterFigure();
+		readabilityGauge.setBackgroundColor(XYGraphMediaFactory.getInstance().getColor(255, 255, 255));
+		readabilityGauge.setValueLabelVisibility(true);
+		readabilityGauge.setRange(0, 10);
+		readabilityGauge.setLoLevel(3.5);
+		readabilityGauge.setLoloLevel(2);
+		readabilityGauge.setHiLevel(8.5);
+		readabilityGauge.setHihiLevel(7);
+		readabilityGauge.setMajorTickMarkStepHint(8);
+		lws.setContents(readabilityGauge);
+		
+		//////////////////////////////////////////////////////////////////////
+		SWTImageCanvas swtImgCanvas= new SWTImageCanvas(sashForm);
+		swtImgCanvas.startThreadForTest();
 
+		sashForm.setWeights(new int[] {1, 4, 2});
 	}
 
 	@Override
@@ -61,11 +95,12 @@ public class GaugeView extends ViewPart
 		public ReadabilityScore(Composite parent, int style) {
 			super(parent, style);
 
-			GridLayout layout = new GridLayout(1, true);
+			FillLayout layout = new FillLayout();
+			layout.type = SWT.VERTICAL;
 			parent.setLayout(layout);
-			parent.setLayoutData(new GridData(GridData.FILL));
-
-			LightweightSystem lws = new LightweightSystem(this);
+			
+			final Canvas canvas = new Canvas(parent, SWT.NONE);
+			LightweightSystem lws = new LightweightSystem(canvas);
 			readabilityGauge = new MeterFigure();
 			readabilityGauge.setBackgroundColor(XYGraphMediaFactory.getInstance().getColor(255, 255, 255));
 			readabilityGauge.setValueLabelVisibility(true);
@@ -77,6 +112,11 @@ public class GaugeView extends ViewPart
 			readabilityGauge.setMajorTickMarkStepHint(8);
 
 			lws.setContents(readabilityGauge);
+			
+			GridData gridData = new GridData();
+			gridData.horizontalAlignment = GridData.FILL;
+			gridData.grabExcessHorizontalSpace = true;
+			setLayoutData(gridData);
 
 			methodLabel = new Label(parent, SWT.CENTER);
 			FontDescriptor boldDescriptor = FontDescriptor.createFrom(methodLabel.getFont()).setStyle(SWT.BOLD);
@@ -85,6 +125,11 @@ public class GaugeView extends ViewPart
 			methodLabel.setText("methodName");
 
 			methodLabel.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, true, true));
+			//////////////////////////////////////////////////////////////////////////////////
+			
+//			SWTImageCanvas swtImgCanvas= new SWTImageCanvas(parent);
+//			swtImgCanvas.startThreadForTest();
+//			swtImgCanvas.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
 		}
 
