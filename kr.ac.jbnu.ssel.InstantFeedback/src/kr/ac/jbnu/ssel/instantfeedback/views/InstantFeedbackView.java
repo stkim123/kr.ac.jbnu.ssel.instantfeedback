@@ -327,12 +327,12 @@ public class InstantFeedbackView extends ViewPart
 			readabilityScore = new MeterFigure();
 			readabilityScore.setBackgroundColor(XYGraphMediaFactory.getInstance().getColor(255, 255, 255));
 			readabilityScore.setValueLabelVisibility(true);
-			readabilityScore.setRange(0, 100);
-			readabilityScore.setLoLevel(35);
-			readabilityScore.setLoloLevel(20);
-			readabilityScore.setHiLevel(85);
-			readabilityScore.setHihiLevel(70);
-			readabilityScore.setMajorTickMarkStepHint(80);
+			readabilityScore.setRange(0, 10);
+			readabilityScore.setLoLevel(3.5);
+			readabilityScore.setLoloLevel(2);
+			readabilityScore.setHiLevel(8.5);
+			readabilityScore.setHihiLevel(7);
+			readabilityScore.setMajorTickMarkStepHint(8);
 
 			lws.setContents(readabilityScore);
 
