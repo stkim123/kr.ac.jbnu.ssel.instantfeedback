@@ -15,6 +15,21 @@
             class="kr.ac.jbnu.ssel.instantfeedback.views.InstantFeedbackView"
             id="kr.ac.jbnu.ssel.instantfeedback.views.InstantFeedbackView">
       </view>
+            <view
+            name="Gauge View"
+            icon="icons/sample.gif"
+            category="InstantFeedback"
+            class="kr.ac.jbnu.ssel.instantfeedback.views.GaugeView"
+            id="kr.ac.jbnu.ssel.instantfeedback.views.GaugeView">
+      </view>
+            <view
+            name="Readability Timeline View"
+            icon="icons/sample.gif"
+            category="InstantFeedback"
+            class="kr.ac.jbnu.ssel.instantfeedback.views.TimelineView"
+            id="kr.ac.jbnu.ssel.instantfeedback.views.TimelineView">
+      </view>      
+      
    </extension>
    
    <extension

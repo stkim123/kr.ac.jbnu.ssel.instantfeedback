@@ -43,6 +43,7 @@ import kr.ac.jbnu.ssel.instantfeedback.domain.Features;
 import kr.ac.jbnu.ssel.instantfeedback.tool.Xmeans.Cluster;
 
 public class FeatureExtractor {
+	
 	private static String temporaryFileName = "temp.java";
 
 	private Features features;
@@ -56,6 +57,7 @@ public class FeatureExtractor {
 		identifierParser = new IdentifierParser();
 
 		String sourceAsString = "public class AA{ " + methodBody.substring(0, methodBody.length() - 1) + "}";
+		
 		ASTParser parser = ASTParser.newParser(AST.JLS8);
 		parser.setSource(sourceAsString.toCharArray());
 		parser.setResolveBindings(true);

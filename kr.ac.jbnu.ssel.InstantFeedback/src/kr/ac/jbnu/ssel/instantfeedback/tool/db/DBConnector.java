@@ -53,6 +53,15 @@ public class DBConnector {
 			stmt.execute("CREATE TABLE IF NOT EXISTS user ( username VARCHAR(32) NOT NULL UNIQUE, age INTEGER,"
 					+ "expierence INTEGER, javaExpierence INTEGER, area VARCHAR(32), createdTime datetime);");
 
+			User user = new User();
+			user.setUsername("test");
+			user.setAge(1);
+			user.setArea("test");
+			user.setJavaExpierence(1);
+			user.setExpierence(1);
+			user.setCreatedDate(new Date());
+			saveUserData(user);
+			
 			stmt.execute("CREATE TABLE IF NOT EXISTS readability ( id INTEGER NOT NULL IDENTITY,"
 					+ "LOC INTEGER DEFAULT NULL, " + "numOfComments INTEGER DEFAULT NULL,"
 					+ "numOfBlankLines INTEGER DEFAULT NULL," + "numOfBitOperators INTEGER DEFAULT NULL,"
@@ -101,7 +110,7 @@ public class DBConnector {
 		}
 	}
 
-	public void saveReadabilityData(Readability readability) {
+	public void storeReadability(Readability readability) {
 		try {
 			// String readabilityInsert = "INSERT INTO readability (LOC,
 			// numOfComments, numOfBlankLines, numOfBitOperators,"
@@ -218,8 +227,10 @@ public class DBConnector {
 
 		try {
 			Statement stmt = dbConnection.createStatement();
-			ResultSet rs = stmt.executeQuery("select * from readability where username='" + user.getUsername()
-					+ "' and methodname='" + source.getMethodName() + "' and classname='" + source.getClassName()
+			ResultSet rs = stmt.executeQuery("select * from readability where "
+//					+ "username='" + user.getUsername()
+//					+ "' and methodname='" + source.getMethodName() + "' and classname='" + source.getClassName()
+					+ "methodname='" + source.getMethodName() + "' and classname='" + source.getClassName()
 					+ "' order by storedTime desc;");
 
 			Readability readabilityInfo = null;
@@ -235,9 +246,9 @@ public class DBConnector {
 		}
 
 		for (Readability readability : readabilities) {
-			String storedMethodName = readability.getMethodName();
-			String storedClassName = readability.getClassName();
-			if (storedClassName.equals(source.getClassName()) && storedMethodName.equals(source.getMethodName()))
+//			String storedMethodName = readability.getMethodName();
+//			String storedClassName = readability.getClassName();
+//			if (storedClassName.equals(source.getClassName()) && storedMethodName.equals(source.getMethodName()))
 				result.add(readability);
 			if (result.size() == Constants.maxGraphResult)
 				break;
