@@ -72,7 +72,7 @@ public class GaugeView extends ViewPart
 		
 		//////////////////////////////////////////////////////////////////////
 		SWTImageCanvas swtImgCanvas= new SWTImageCanvas(sashForm);
-		swtImgCanvas.startThreadForTest();
+		swtImgCanvas.requestToDraw();
 
 		sashForm.setWeights(new int[] {1, 4, 2});
 	}

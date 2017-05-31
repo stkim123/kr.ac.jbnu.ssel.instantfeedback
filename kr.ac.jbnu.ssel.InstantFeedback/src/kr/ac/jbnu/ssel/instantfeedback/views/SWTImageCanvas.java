@@ -52,30 +52,37 @@ import kr.ac.jbnu.ssel.instantfeedback.R.R;
 public class SWTImageCanvas extends Canvas
 {
 
+	private static final String UP_ARROW="UpArrow";
+	private static final String EXT=".png";
+	
 	private static final int MAX_IMAGES = 16;
-
+	private static final int IMG_VIEW_DELAY = 50;  
+	private static int IMG_CENTER_LEFT_MARGIN = 0;
+	
 	private Image image = null;
 	private Image[] images = new Image[MAX_IMAGES];
 	private int imageIndex = 0;
+	
+	private String overlayText = "+3.5";
 
 	public SWTImageCanvas(final Composite parent)
 	{
 		this(parent, SWT.NULL);
 	}
 
-	public void startThreadForTest()
+	public void requestToDraw()
 	{
 		new Thread()
 		{
 			public void run()
 			{
-				for (int i = 0; i < MAX_IMAGES * 100; i++)
+				for (int i = 0; i < MAX_IMAGES; i++)
 				{
 					imageIndex = i;
 
 					try
 					{
-						Thread.sleep(1000);
+						Thread.sleep(IMG_VIEW_DELAY);
 					} 
 					catch (Throwable th)
 					{
@@ -111,7 +118,7 @@ public class SWTImageCanvas extends Canvas
 	 */
 	public SWTImageCanvas(final Composite parent, int style)
 	{
-		super(parent, style | SWT.BORDER | SWT.NO_BACKGROUND);
+		super(parent, style);
 
 		addControlListener(new ControlListener()
 		{
@@ -144,8 +151,7 @@ public class SWTImageCanvas extends Canvas
 		for (int i = 0; i < MAX_IMAGES; i++)
 		{
 			images[i] = new Image(getDisplay(),
-//					R.class.getResourceAsStream("progress" + i + ".png"));
-					R.class.getResourceAsStream("UpArrow.png"));
+					R.class.getResourceAsStream(UP_ARROW + i + EXT));
 		}
 		image = images[0];
 	}
@@ -176,15 +182,21 @@ public class SWTImageCanvas extends Canvas
 		Rectangle clientArea = getClientArea();
 		
 		ImageData data = image.getImageData();
-		gc.drawImage(image, 0, 0, data.width, data.height, 0, 0, data.width / 2, data.height / 2);
-
-		String averageTitle = "Average";
-		String average = "20.5";
+		
+		int startImgX = (clientArea.width - data.width/2)/2;
+		IMG_CENTER_LEFT_MARGIN = startImgX/5; 
+		
+//		gc.drawImage(image, startX, startY);
+		gc.drawImage(image, 0, 0, data.width, data.height, startImgX - IMG_CENTER_LEFT_MARGIN , 0, data.width / 2, data.height / 2);
 
 		Font font = new Font(getDisplay(), "Tahoma", 15, SWT.BOLD);
 		gc.setFont(font);
-		gc.drawText(averageTitle, 60, 80);
-		gc.drawText(average, 80, 110);
+		int startTextY = clientArea.height/2 + clientArea.height/10;
+		gc.drawText(overlayText, startImgX + IMG_CENTER_LEFT_MARGIN*2, startTextY, SWT.DRAW_TRANSPARENT);
 	}
 
+	public void setOverlayText(String text)
+	{
+		overlayText = text;
+	}
 }

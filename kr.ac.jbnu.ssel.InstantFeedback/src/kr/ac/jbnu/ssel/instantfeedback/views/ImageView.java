@@ -30,7 +30,7 @@ public class ImageView extends ViewPart
 		parent.setLayout(fillLayout);
 		
 		swtImgCanvas= new SWTImageCanvas(parent);
-		swtImgCanvas.startThreadForTest();
+		swtImgCanvas.requestToDraw();
 	}
 
 	@Override
