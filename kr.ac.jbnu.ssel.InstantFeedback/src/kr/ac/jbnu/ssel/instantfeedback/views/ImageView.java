@@ -15,7 +15,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.part.ViewPart;
 
 import kr.ac.jbnu.ssel.instantfeedback.domain.Readability;
-import test.view.SWTImageCanvas;
 
 public class ImageView extends ViewPart
 {
