@@ -4,10 +4,6 @@ import org.eclipse.draw2d.LightweightSystem;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.nebula.visualization.widgets.figures.MeterFigure;
 import org.eclipse.nebula.visualization.xygraph.util.XYGraphMediaFactory;
-import org.eclipse.nebula.widgets.grid.Grid;
-import org.eclipse.nebula.widgets.grid.GridColumn;
-import org.eclipse.nebula.widgets.grid.GridColumnGroup;
-import org.eclipse.nebula.widgets.grid.GridItem;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.graphics.Font;
@@ -15,6 +11,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.part.ViewPart;
 
@@ -28,10 +25,10 @@ public class GaugeView extends ViewPart
 //	private String serverUrl = "http://175.249.158.207:8080/readability";
 	// private String serverUrl = "http://localhost:8080/readability";
 
-	private ReadabilityScore methodReadability;
 	private Readability readabilityInfo;
 	private MeterFigure readabilityGauge;
 	private Label methodLabel;
+	private ArrowImageCanvas swtImgCanvas; 
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -71,9 +68,9 @@ public class GaugeView extends ViewPart
 		lws.setContents(readabilityGauge);
 		
 		//////////////////////////////////////////////////////////////////////
-		SWTImageCanvas swtImgCanvas= new SWTImageCanvas(sashForm);
-		swtImgCanvas.requestToDraw();
-
+		swtImgCanvas= new ArrowImageCanvas(sashForm);
+		swtImgCanvas.setArrowNText(ArrowImageCanvas.UP, "+0.3");
+		
 		sashForm.setWeights(new int[] {1, 4, 2});
 	}
 
@@ -82,9 +79,34 @@ public class GaugeView extends ViewPart
 
 	}
 	
+	double previousReadability = 0;
+	
 	public void invalidate(Readability readability)
 	{
-		methodReadability.setValue(readability);
+		Display.getDefault().asyncExec(new Runnable() {
+			@Override
+			public void run() {
+				readabilityGauge.setValue(readability.getReadability());
+				methodLabel.setText(readability.getMethodName());
+			}
+		});
+		
+		double gap = readability.getReadability() - previousReadability;
+		int direction = ArrowImageCanvas.UP;
+		String sign = "";
+		
+		if( gap >= 0)
+		{
+			direction = ArrowImageCanvas.UP;
+			sign = "+";
+		}
+		else
+		{
+			direction = ArrowImageCanvas.DOWN;
+		}
+		
+		swtImgCanvas.setArrowNText(direction, sign + " " +  String.format("%.2f", gap));
+		previousReadability = readability.getReadability();
 	}
 
 	public class ReadabilityScore extends Canvas {

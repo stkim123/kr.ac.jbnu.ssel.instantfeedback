@@ -49,23 +49,33 @@ import kr.ac.jbnu.ssel.instantfeedback.R.R;
  * 
  * @author Chengdong Li: cli4@uky.edu
  */
-public class SWTImageCanvas extends Canvas
+public class ArrowImageCanvas extends Canvas
 {
 
 	private static final String UP_ARROW="UpArrow";
+	private static final String DOWN_ARROW="DownArrow";
+	
 	private static final String EXT=".png";
 	
 	private static final int MAX_IMAGES = 16;
-	private static final int IMG_VIEW_DELAY = 50;  
+	private static final int IMG_VIEW_DELAY = 100;
+	
+	public static final int UP = 100;
+	public static final int DOWN = 200;
+	
 	private static int IMG_CENTER_LEFT_MARGIN = 0;
 	
 	private Image image = null;
-	private Image[] images = new Image[MAX_IMAGES];
+	private Image[] upImages = new Image[MAX_IMAGES];
+	private Image[] downImages = new Image[MAX_IMAGES];
+	private Image[] currentImages; 
+	
 	private int imageIndex = 0;
 	
+	private int direction = UP;
 	private String overlayText = "+3.5";
 
-	public SWTImageCanvas(final Composite parent)
+	public ArrowImageCanvas(final Composite parent)
 	{
 		this(parent, SWT.NULL);
 	}
@@ -99,7 +109,7 @@ public class SWTImageCanvas extends Canvas
 						{
 							if (image.isDisposed())
 								return;
-							image = images[imageIndex % MAX_IMAGES];
+							image = currentImages[imageIndex % MAX_IMAGES];
 							redraw();
 						}
 					});
@@ -116,10 +126,12 @@ public class SWTImageCanvas extends Canvas
 	 * @param style
 	 *            the style of this control.
 	 */
-	public SWTImageCanvas(final Composite parent, int style)
+	public ArrowImageCanvas(final Composite parent, int style)
 	{
 		super(parent, style);
 
+		loadImages();
+		
 		addControlListener(new ControlListener()
 		{
 
@@ -142,18 +154,26 @@ public class SWTImageCanvas extends Canvas
 				paint(event.gc);
 			}
 		});
-
-		loadImages();
 	}
 
-	public void loadImages()
+	private void loadImages()
 	{
 		for (int i = 0; i < MAX_IMAGES; i++)
 		{
-			images[i] = new Image(getDisplay(),
-					R.class.getResourceAsStream(UP_ARROW + i + EXT));
+			upImages[i] = new Image(getDisplay(),R.class.getResourceAsStream(UP_ARROW + i + EXT));
+			downImages[i] = new Image(getDisplay(),R.class.getResourceAsStream(DOWN_ARROW + i + EXT));
 		}
-		image = images[0];
+		
+		if( direction == UP)
+		{
+			image = upImages[0];
+			currentImages = upImages;
+		}
+		else
+		{
+			image = downImages[0];
+			currentImages = downImages;
+		}
 	}
 	
 
@@ -162,12 +182,15 @@ public class SWTImageCanvas extends Canvas
 	 */
 	public void dispose()
 	{
-		if (image != null && !image.isDisposed())
+		for (Image imageItem : upImages)
 		{
-			image.dispose();
+			if (imageItem != null && !imageItem.isDisposed())
+			{
+				imageItem.dispose();
+			}
 		}
-
-		for (Image imageItem : images)
+		
+		for (Image imageItem : downImages)
 		{
 			if (imageItem != null && !imageItem.isDisposed())
 			{
@@ -195,8 +218,19 @@ public class SWTImageCanvas extends Canvas
 		gc.drawText(overlayText, startImgX + IMG_CENTER_LEFT_MARGIN*2, startTextY, SWT.DRAW_TRANSPARENT);
 	}
 
-	public void setOverlayText(String text)
+	public void setArrowNText(int direction, String text)
 	{
+		this.direction = direction;
+		if( direction == UP)
+		{
+			currentImages = upImages;
+		}
+		else
+		{
+			currentImages = downImages;
+		}
 		overlayText = text;
+		
+		requestToDraw();
 	}
 }
