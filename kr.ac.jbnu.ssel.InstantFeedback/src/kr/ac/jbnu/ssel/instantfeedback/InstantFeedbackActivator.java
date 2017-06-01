@@ -380,32 +380,32 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 				public void keyPressed(KeyEvent arg0) {
 				}
 			});
+		
+			((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addMouseListener(new MouseListener()
+			{
+				
+				@Override
+				public void mouseUp(MouseEvent arg0){}
+				
+				@Override
+				public void mouseDown(MouseEvent arg0)
+				{
+					showGaugeNTimelineViewOfCurrentMethod();
+				}
+	
+				@Override
+				public void mouseDoubleClick(MouseEvent arg0){}
+			});
+			
+			((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addCaretListener(new CaretListener()
+			{
+				@Override
+				public void caretMoved(CaretEvent arg0)
+				{
+					showGaugeNTimelineViewOfCurrentMethod();
+				}
+			});
 		}
-		
-		((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addMouseListener(new MouseListener()
-		{
-			
-			@Override
-			public void mouseUp(MouseEvent arg0){}
-			
-			@Override
-			public void mouseDown(MouseEvent arg0)
-			{
-				showGaugeNTimelineViewOfCurrentMethod();
-			}
-
-			@Override
-			public void mouseDoubleClick(MouseEvent arg0){}
-		});
-		
-		((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addCaretListener(new CaretListener()
-		{
-			@Override
-			public void caretMoved(CaretEvent arg0)
-			{
-				showGaugeNTimelineViewOfCurrentMethod();
-			}
-		});
 	}
 	
 	private void showGaugeNTimelineViewOfCurrentMethod()

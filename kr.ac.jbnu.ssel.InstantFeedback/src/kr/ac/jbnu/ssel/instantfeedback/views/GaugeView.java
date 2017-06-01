@@ -70,7 +70,7 @@ public class GaugeView extends ViewPart
 		lws.setContents(readabilityGauge);
 		
 		//////////////////////////////////////////////////////////////////////
-		swtImgCanvas= new ArrowImageCanvas(sashForm);
+		swtImgCanvas= new ArrowImageCanvas(sashForm,readabilityGauge);
 		swtImgCanvas.setArrowNText(ArrowImageCanvas.UP, "+0.3");
 		
 		sashForm.setWeights(new int[] {1, 4, 2});

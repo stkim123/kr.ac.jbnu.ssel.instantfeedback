@@ -7,21 +7,7 @@
 *******************************************************************************/
 package kr.ac.jbnu.ssel.instantfeedback.views;
 
-import java.util.Map;
-
-import org.eclipse.jdt.core.ElementChangedEvent;
-import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IElementChangedListener;
-import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.ClassInstanceCreation;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.ForStatement;
-import org.eclipse.jdt.core.dom.IfStatement;
-import org.eclipse.jdt.internal.core.JavaElementDelta;
+import org.eclipse.nebula.visualization.widgets.figures.MeterFigure;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
@@ -75,9 +61,11 @@ public class ArrowImageCanvas extends Canvas
 	private int direction = UP;
 	private String overlayText = "+3.5";
 
-	public ArrowImageCanvas(final Composite parent)
+	private MeterFigure readabilityGauge;
+	public ArrowImageCanvas(final Composite parent, MeterFigure readabilityGauge)
 	{
 		this(parent, SWT.NULL);
+		this.readabilityGauge = readabilityGauge;
 	}
 
 	public void requestToDraw()
@@ -203,10 +191,19 @@ public class ArrowImageCanvas extends Canvas
 	private void paint(GC gc)
 	{
 		Rectangle clientArea = getClientArea();
-		
 		ImageData data = image.getImageData();
-		
-		int startImgX = (clientArea.width - data.width/2)/2;
+
+		int drawAreaWidth = clientArea.width;
+//		int drawAreaWidth = readabilityGauge.getSize().width;
+//		int drawAreaWidth = readabilityGauge.getClientArea().width;
+//		int drawAreaWidth = readabilityGauge.getPreferredSize().width;
+//		int drawAreaWidth = readabilityGauge.getBounds().width;
+//		int drawAreaWidth1 = readabilityGauge.getMinimumSize().width;
+//		int drawAreaWidth = readabilityGauge.getInsets().getWidth();
+//		int drawAreaWidth2 = readabilityGauge.getMaximumSize().width;
+//		System.out.println("drawAreaWidth2:"+ drawAreaWidth2);
+//		System.out.println("clientArea.width:"+ clientArea.width+ ", drawAreaWidth1:"+ drawAreaWidth1 + ", drawAreaWidth:" + drawAreaWidth);
+		int startImgX = (drawAreaWidth - data.width/2)/2;
 		IMG_CENTER_LEFT_MARGIN = startImgX/5; 
 		
 //		gc.drawImage(image, startX, startY);
