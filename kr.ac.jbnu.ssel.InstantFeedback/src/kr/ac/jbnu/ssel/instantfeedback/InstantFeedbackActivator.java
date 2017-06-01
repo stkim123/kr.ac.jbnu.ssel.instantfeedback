@@ -21,6 +21,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
@@ -290,6 +292,47 @@ public class InstantFeedbackActivator extends AbstractUIPlugin
 				}
 			});
 		}
+		
+		((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addMouseListener(new MouseListener()
+		{
+			
+			@Override
+			public void mouseUp(MouseEvent arg0){}
+			{
+			}
+			
+			@Override
+			public void mouseDown(MouseEvent arg0)
+			{
+				IMethod currentMethod = getCurrentMethodAtCurrentCarrot();
+				// TODO: open Gauge and Readability View of the current method. 
+			}
+			
+			@Override
+			public void mouseDoubleClick(MouseEvent arg0){}
+		});
+	}
+	
+	private IMethod getCurrentMethodAtCurrentCarrot()
+	{
+		IMethod currentMethod = null;
+		try
+		{
+			IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+			ITextEditor editor = (ITextEditor) page.getActiveEditor();
+			IJavaElement elem = JavaUI.getEditorInputJavaElement(editor.getEditorInput());
+			if (elem instanceof ICompilationUnit) {
+			    ITextSelection sel = (ITextSelection) editor.getSelectionProvider().getSelection();
+			    IJavaElement selected = ((ICompilationUnit) elem).getElementAt(sel.getOffset());
+			    if (selected != null && selected.getElementType() == IJavaElement.METHOD) {
+			    	currentMethod = (IMethod) selected;
+			    }
+			}
+		} catch (JavaModelException e)
+		{
+			e.printStackTrace();
+		}
+		return currentMethod;
 	}
 	
 	private void invalidateViews(Readability readability)
