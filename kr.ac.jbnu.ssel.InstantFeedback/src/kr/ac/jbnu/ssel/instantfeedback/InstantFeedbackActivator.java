@@ -148,6 +148,25 @@ public class InstantFeedbackActivator extends AbstractUIPlugin
 		      }
 		   }
 	 
+	class MyShutdownHook extends Thread
+	{
+		@Override
+		public void run()
+		{
+			int i = 0;
+			while(i < 100)
+			{
+				try
+				{
+					System.out.println("SHUTDOWN_HOOK!!!!!!!!!!!!!!!!!!!!!!!!!!!!! :"+ i++);
+					Thread.sleep(100);
+				} catch (InterruptedException e)
+				{
+					e.printStackTrace();
+				}
+			}
+		}
+	}
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -157,6 +176,11 @@ public class InstantFeedbackActivator extends AbstractUIPlugin
 	{
 		super.start(context);
 		plugin = this;
+		
+////////////////////////////////////////////////////////////////////////////////////////////////
+//		
+		 Runtime.getRuntime().addShutdownHook(new MyShutdownHook());
+		 System.out.println("add shutdown hook!");
 ////////////////////////////////////////////////////////////////////////////////////////////////
 // The following is for capturing save/refactoring events
 		  IResourceChangeListener listener = new MyResourceChangeReporter();
