@@ -4,7 +4,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.URISyntaxException;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -49,32 +53,29 @@ public class DBConnector {
 
 			Statement stmt = dbConnection.createStatement();
 
-//			stmt.execute("drop table  if exists user");
+			stmt.execute("drop table  if exists user");
 			stmt.execute("CREATE TABLE IF NOT EXISTS user ( username VARCHAR(32) NOT NULL UNIQUE, age INTEGER,"
-					+ "expierence INTEGER, javaExpierence INTEGER, area VARCHAR(32), createdTime datetime);");
+					+ "expierence INTEGER, javaExpierence INTEGER, area VARCHAR(32), createdTime datetime"
+					+ ", macAddress VARCHAR(50), isSended BIT(1) default 0);");
 
-			User user = new User();
-			user.setUsername("test");
-			user.setAge(1);
-			user.setArea("test");
-			user.setJavaExpierence(1);
-			user.setExpierence(1);
-			user.setCreatedDate(new Date());
+			User user = createDefaultUser();
 			saveUserData(user);
 			
-			stmt.execute("CREATE TABLE IF NOT EXISTS readability ( id INTEGER NOT NULL IDENTITY,"
-					+ "LOC INTEGER DEFAULT NULL, " + "numOfComments INTEGER DEFAULT NULL,"
-					+ "numOfBlankLines INTEGER DEFAULT NULL," + "numOfBitOperators INTEGER DEFAULT NULL,"
-					+ "readability double DEFAULT NULL," + "username varchar(255) DEFAULT NULL,"
-					+ "storedTime datetime DEFAULT NULL," + "methodname varchar(255) DEFAULT NULL,"
-					+ "classname varchar(255) DEFAULT NULL,"
-					// + "patternrate double DEFAULT NULL,"
-					+ "maxNestedControl INTEGER DEFAULT NULL," + "programVolume double DEFAULT NULL,"
-					+ "entropy double DEFAULT NULL,"
+			stmt.execute("drop table  if exists readability");
+			stmt.execute("CREATE TABLE IF NOT EXISTS readability ( id INTEGER NOT NULL IDENTITY"
+					+ ",LOC INTEGER DEFAULT NULL, " + "numOfComments INTEGER DEFAULT NULL"
+					+ ",numOfBlankLines INTEGER DEFAULT NULL," + "numOfBitOperators INTEGER DEFAULT NULL"
+					+ ",readability double DEFAULT NULL," + "username varchar(255) DEFAULT NULL"
+					+ ",storedTime datetime DEFAULT NULL," + "methodname varchar(255) DEFAULT NULL"
+					+ ",classname varchar(255) DEFAULT NULL"
+					// + ",patternrate double DEFAULT NULL"
+					+ ",maxNestedControl INTEGER DEFAULT NULL," + "programVolume double DEFAULT NULL"
+					+ ",entropy double DEFAULT NULL"
 					// + "CONSTRAINT username FOREIGN KEY (username) REFERENCES
 					// user (username) ON DELETE NO ACTION ON UPDATE NO ACTION"
+					+ ",isSended BIT(1) default 0"
 					+ ");");
-			deleteData();
+//			deleteData();
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
@@ -82,6 +83,40 @@ public class DBConnector {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private User createDefaultUser() {
+		User user = new User();
+		user.setUsername("test");
+		user.setAge(1);
+		user.setArea("test");
+		user.setJavaExpierence(1);
+		user.setExpierence(1);
+		user.setCreatedDate(new Date());
+		
+		InetAddress ip;
+		StringBuilder macString = new StringBuilder("");
+		try {
+			ip = InetAddress.getLocalHost();
+			System.out.println("Current IP address : " + ip.getHostAddress());
+	
+			NetworkInterface network = NetworkInterface.getByInetAddress(ip);
+	
+			byte[] mac = network.getHardwareAddress();
+	
+			System.out.print("Current MAC address : ");
+	
+			for (int i = 0; i < mac.length; i++) {
+				macString.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
+			}
+		}  catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (SocketException e){
+			e.printStackTrace();
+		}
+		user.setMacAddress(macString.toString());
+		
+		return user;
 	}
 
 	private PrintWriter createLogWriter(String logFileName, boolean append, boolean autoFlush) throws IOException {
@@ -212,8 +247,6 @@ public class DBConnector {
 			insertStmt.setString(5, user.getArea());
 			insertStmt.setDate(6, new java.sql.Date(user.getCreatedDate().getTime()));
 			insertStmt.executeUpdate();
-
-			checkData();
 		} catch (SQLException e) {
 			System.out.println("Error : saveUserData");
 			e.printStackTrace();
@@ -495,35 +528,8 @@ public class DBConnector {
 			HSQLDBClass.stopServer(Constants.readabilityDBName);
 		}
 	}
-
-	private void deleteData() {
-		try {
-			Statement stmt = dbConnection.createStatement();
-			stmt.execute("delete from readability");
-			stmt.execute("delete from user");
-			Preferences preferences = ConfigurationScope.INSTANCE.getNode(Constants.preferencesName);
-			Preferences userPreferences = preferences.node(Constants.preferencesUserNode);
-			userPreferences.clear();
-			checkData();
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} catch (BackingStoreException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void checkData() {
-		try {
-			Statement stmt = dbConnection.createStatement();
-			ResultSet rs = stmt.executeQuery("select * from user");
-			if (rs.next())
-				System.out.println("user : hasNext");
-			rs = stmt.executeQuery("select * from readability");
-			if (rs.next())
-				System.out.println("readability : hasNext");
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+	
+	public void setUserDataSended() {
+		
 	}
 }

@@ -10,6 +10,8 @@ public class User {
 	private int javaExperience;
 	private String area;
 	private Date createdDate;
+	private String macAddress;
+	private boolean isSended;
 	
 	public User()
 	{		
@@ -67,4 +69,21 @@ public class User {
 	public void setCreatedDate(Date createdDate) {
 		this.createdDate = createdDate;
 	}
+	
+	public String getMacAddress() {
+		return macAddress;
+	}
+
+	public void setMacAddress(String macAddress) {
+		this.macAddress = macAddress;
+	}
+
+	public boolean isSended() {
+		return isSended;
+	}
+
+	public void setSended(boolean isSended) {
+		this.isSended = isSended;
+	}
+	
 }
