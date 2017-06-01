@@ -3,6 +3,13 @@ package kr.ac.jbnu.ssel.instantfeedback;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceChangeEvent;
+import org.eclipse.core.resources.IResourceChangeListener;
+import org.eclipse.core.resources.IResourceDelta;
+import org.eclipse.core.resources.IResourceDeltaVisitor;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMethod;
@@ -27,7 +34,6 @@ import org.osgi.framework.BundleContext;
 import kr.ac.jbnu.ssel.instantfeedback.domain.Features;
 import kr.ac.jbnu.ssel.instantfeedback.domain.Readability;
 import kr.ac.jbnu.ssel.instantfeedback.domain.User;
-import kr.ac.jbnu.ssel.instantfeedback.preferences.InstantFeedbackPreference;
 import kr.ac.jbnu.ssel.instantfeedback.tool.FeatureExtractor;
 import kr.ac.jbnu.ssel.instantfeedback.tool.db.DBConnector;
 import kr.ac.jbnu.ssel.instantfeedback.views.GaugeView;
@@ -78,6 +84,70 @@ public class InstantFeedbackActivator extends AbstractUIPlugin
 		return false;
 	}
 
+	 ////////////////////////////////////////////////////////////
+	 // STKIM: for Testing
+	 class MyResourceChangeReporter implements IResourceChangeListener {
+	      public void resourceChanged(IResourceChangeEvent event) {
+	         IResource res = event.getResource();
+	         try
+			{
+				switch (event.getType()) {
+				    case IResourceChangeEvent.PRE_CLOSE:
+				       System.out.print("Project ");
+				       System.out.print(res.getFullPath());
+				       System.out.println(" is about to close.");
+				       break;
+				    case IResourceChangeEvent.PRE_DELETE:
+				       System.out.print("Project ");
+				       System.out.print(res.getFullPath());
+				       System.out.println(" is about to be deleted.");
+				       break;
+				    case IResourceChangeEvent.POST_CHANGE:
+				       System.out.println("Resources have changed.");
+				       event.getDelta().accept(new DeltaPrinter());
+				       break;
+				    case IResourceChangeEvent.PRE_BUILD:
+				       System.out.println("Build about to run.");
+				       event.getDelta().accept(new DeltaPrinter());
+				       break;
+				    case IResourceChangeEvent.POST_BUILD:
+				       System.out.println("Build complete.");
+				       event.getDelta().accept(new DeltaPrinter());
+				       break;
+				 }
+			} catch (CoreException e)
+			{
+				e.printStackTrace();
+			}
+	      }
+	   }
+	 
+	 ////////////////////////////////////////////////////////////
+	 // STKIM: for Testing 
+	   class DeltaPrinter implements IResourceDeltaVisitor {
+		      public boolean visit(IResourceDelta delta) {
+		         IResource res = delta.getResource();
+		         switch (delta.getKind()) {
+		            case IResourceDelta.ADDED:
+		               System.out.print("Resource ");
+		               System.out.print(res.getFullPath());
+		               System.out.println(" was added.");
+		               break;
+		            case IResourceDelta.REMOVED:
+		               System.out.print("Resource ");
+		               System.out.print(res.getFullPath());
+		               System.out.println(" was removed.");
+		               break;
+		            case IResourceDelta.CHANGED:
+		               System.out.print("Resource ");
+		               System.out.print(res.getFullPath());
+		               System.out.println(" has changed.");
+		               break;
+		         }
+		         return true; // visit the children
+		      }
+		   }
+	 
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -87,7 +157,17 @@ public class InstantFeedbackActivator extends AbstractUIPlugin
 	{
 		super.start(context);
 		plugin = this;
-
+////////////////////////////////////////////////////////////////////////////////////////////////
+// The following is for capturing save/refactoring events
+		  IResourceChangeListener listener = new MyResourceChangeReporter();
+		   ResourcesPlugin.getWorkspace().addResourceChangeListener(listener,
+		      IResourceChangeEvent.PRE_CLOSE
+		      | IResourceChangeEvent.PRE_DELETE
+		      | IResourceChangeEvent.PRE_BUILD
+		      | IResourceChangeEvent.POST_BUILD
+		      | IResourceChangeEvent.POST_CHANGE);
+		
+////////////////////////////////////////////////////////////////////////////////////////////////
 		IWorkbench wb = PlatformUI.getWorkbench();
 		IWorkbenchWindow win = wb.getActiveWorkbenchWindow();
 		IWorkbenchPage page = win.getActivePage();
