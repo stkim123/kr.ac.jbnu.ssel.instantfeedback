@@ -1,5 +1,6 @@
 package kr.ac.jbnu.ssel.instantfeedback.views;
 
+import org.apache.log4j.Logger;
 import org.eclipse.draw2d.LightweightSystem;
 import org.eclipse.jface.resource.FontDescriptor;
 import org.eclipse.nebula.visualization.widgets.figures.MeterFigure;
@@ -21,11 +22,12 @@ public class GaugeView extends ViewPart
 {
 	public static final String ID = "kr.ac.jbnu.ssel.instantfeedback.views.GaugeView";
 	
+	private static Logger logger = Logger.getLogger(GaugeView.class);
+	
 	// private String serverUrl = "http://210.117.128.248:1005/readability";
 //	private String serverUrl = "http://175.249.158.207:8080/readability";
 	// private String serverUrl = "http://localhost:8080/readability";
 
-	private Readability readabilityInfo;
 	private MeterFigure readabilityGauge;
 	private Label methodLabel;
 	private ArrowImageCanvas swtImgCanvas; 
@@ -107,6 +109,7 @@ public class GaugeView extends ViewPart
 		
 		swtImgCanvas.setArrowNText(direction, sign + " " +  String.format("%.2f", gap));
 		previousReadability = readability.getReadability();
+		logger.info("Invalidating GaugeView is completed");
 	}
 
 	public class ReadabilityScore extends Canvas {

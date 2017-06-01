@@ -10,8 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.naming.spi.DirStateFactory.Result;
-
 import weka.clusterers.XMeans;
 import weka.core.Attribute;
 import weka.core.DenseInstance;

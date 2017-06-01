@@ -2,8 +2,10 @@ package kr.ac.jbnu.ssel.instantfeedback.views;
 
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.eclipse.draw2d.LightweightSystem;
 import org.eclipse.nebula.visualization.xygraph.dataprovider.CircularBufferDataProvider;
+import org.eclipse.nebula.visualization.xygraph.figures.Axis;
 import org.eclipse.nebula.visualization.xygraph.figures.Trace;
 import org.eclipse.nebula.visualization.xygraph.figures.Trace.PointStyle;
 import org.eclipse.nebula.visualization.xygraph.figures.XYGraph;
@@ -14,6 +16,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
+import kr.ac.jbnu.ssel.instantfeedback.InstantFeedbackActivator;
 import kr.ac.jbnu.ssel.instantfeedback.domain.Readability;
 import kr.ac.jbnu.ssel.instantfeedback.tool.db.DBConnector;
 
@@ -21,6 +24,7 @@ public class TimelineView extends ViewPart
 {
 	public static final String ID = "kr.ac.jbnu.ssel.instantfeedback.views.TimelineView";
 
+	private static Logger logger = Logger.getLogger(TimelineView.class);
 	// private String serverUrl = "http://210.117.128.248:1005/readability";
 	// private String serverUrl = "http://localhost:8080/readability";
 
@@ -54,7 +58,7 @@ public class TimelineView extends ViewPart
 	{
 		List<Readability> graphData = db.getGraphData(readability);
 		readabilityGraph.getPrimaryXAxis().setRange((double) graphData.size(), 1.0);
-		readabilityGraph.getPrimaryYAxis().setRange(1.0, findMaximum(graphData));
+		readabilityGraph.getPrimaryYAxis().setRange(1.0, 10.0);
 		
 		double[] xValues = new double [graphData.size()];
 		double[] yValues = new double [graphData.size()];
@@ -72,8 +76,8 @@ public class TimelineView extends ViewPart
 		Trace currentTrace = new Trace("Readability changes", readabilityGraph.getPrimaryXAxis()
 				, readabilityGraph.getPrimaryYAxis(), traceDataProvider);
 		
-		currentTrace.getYAxis().setVisible(false);
-		currentTrace.getXAxis().setTitle("");
+		currentTrace.getYAxis().setTitle("Readability score");
+		currentTrace.getXAxis().setTitle("Previous times");
 
 		currentTrace.setPointStyle(PointStyle.XCROSS);
 
@@ -87,6 +91,7 @@ public class TimelineView extends ViewPart
 		
 		lws.setContents(readabilityGraph);
 		readabilityGraph.repaint();
+		logger.info("Invalidating TimelinView is completed");
 	}
 
 	@Override

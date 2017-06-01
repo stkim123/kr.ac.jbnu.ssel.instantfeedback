@@ -1,7 +1,11 @@
 package kr.ac.jbnu.ssel.instantfeedback.preferences;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
+import org.apache.log4j.Logger;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.preference.PreferencePage;
 import org.eclipse.swt.SWT;
@@ -26,6 +30,8 @@ import kr.ac.jbnu.ssel.instantfeedback.tool.db.DBConnector;
 
 public class InstantFeedbackPreference extends PreferencePage implements IWorkbenchPreferencePage{
 
+	private static Logger logger = Logger.getLogger(InstantFeedbackPreference.class);
+	
 	private Label usernameLabel;
 	private Text usernameText;
 	private Label ageLabel;
@@ -118,7 +124,6 @@ public class InstantFeedbackPreference extends PreferencePage implements IWorkbe
         
         buttonBar.setLayoutData(gd);
 		
-		
 		Button defaultButton = new Button(buttonBar, SWT.PUSH);
 		defaultButton.setText("Resotre");
 		int widthHint = convertHorizontalDLUsToPixels(IDialogConstants.BUTTON_WIDTH);
@@ -179,6 +184,21 @@ public class InstantFeedbackPreference extends PreferencePage implements IWorkbe
 //				} catch (BackingStoreException e1) {
 //					e1.printStackTrace();
 //				}
+				SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				SimpleDateFormat formatter2 = new SimpleDateFormat("EE MMM dd HH:mm:ss z yyyy",
+		                Locale.ENGLISH);
+				
+				Date curDate = user.getCreatedDate();
+				String dateString2 = curDate.toString();
+				try {
+					curDate = formatter2.parse(dateString2);
+				} catch (ParseException e1) {
+					e1.printStackTrace();
+				}
+				String curDateString = formatter.format(curDate);
+				
+				logger.info("User infomation saved("+ username + ", " + age + ", " + workField + ", "
+						 	+ experience + ", " + javaexperience + ", " + curDateString);
 				
 				db.saveUserData(user);
 				sender.saveUserToServer(user);

@@ -2,6 +2,7 @@ package kr.ac.jbnu.ssel.instantfeedback;
 
 import java.util.Date;
 
+import org.apache.log4j.Logger;
 import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IMethod;
@@ -26,6 +27,7 @@ import org.osgi.framework.BundleContext;
 import kr.ac.jbnu.ssel.instantfeedback.domain.Features;
 import kr.ac.jbnu.ssel.instantfeedback.domain.Readability;
 import kr.ac.jbnu.ssel.instantfeedback.domain.User;
+import kr.ac.jbnu.ssel.instantfeedback.preferences.InstantFeedbackPreference;
 import kr.ac.jbnu.ssel.instantfeedback.tool.FeatureExtractor;
 import kr.ac.jbnu.ssel.instantfeedback.tool.db.DBConnector;
 import kr.ac.jbnu.ssel.instantfeedback.views.GaugeView;
@@ -35,6 +37,8 @@ public class InstantFeedbackActivator extends AbstractUIPlugin
 {
 	// The plug-in ID
 	public static final String PLUGIN_ID = "kr.ac.jbnu.ssel.instantfeedback";
+	
+	private static Logger logger = Logger.getLogger(InstantFeedbackActivator.class);
 
 	// The shared instance
 	private static InstantFeedbackActivator plugin;
@@ -99,6 +103,7 @@ public class InstantFeedbackActivator extends AbstractUIPlugin
 //							|| checkSaveKey(e)
 							)
 					{
+						logger.info("View update start");
 						Display.getDefault().asyncExec(new Runnable()
 						{
 							public void run()
@@ -113,24 +118,34 @@ public class InstantFeedbackActivator extends AbstractUIPlugin
 									{
 										selectedJavaElement = ((ICompilationUnit) javaElement)
 												.getElementAt(textSelection.getOffset());
-										String className = selectedJavaElement.getParent().getElementName();
 
 										// check if the selected java element is a method
 										if (selectedJavaElement != null
 												&& selectedJavaElement.getElementType() == IJavaElement.METHOD)
 										{
+											String className = selectedJavaElement.getParent().getElementName();
 											String currentMethodCode = ((IMethod) selectedJavaElement).getSource()+ "}";
-
-											System.out.println("currentMethodCode:" + currentMethodCode);
+											
+											logger.info("Current method code: " + currentMethodCode);
 											///////////////////////////////////////////////////////////////////////////////////////////
 											// check if the method source is changed compared to previous revision.
 											if (checkIftheMethodisChanged(currentMethodCode))
 											{
 												FeatureExtractor extractor = new FeatureExtractor();
-
+												
+												logger.info("Feature extraction start");
 												// extract features
 												Features features = extractor.extractFeatures(currentMethodCode);
 												features.setClassName(className);
+												logger.info("Extracted features: " + "LOC: " + features.getLOC() + ", numOfMethodInvocation: " + features.getNumOfMethodInvocation()
+												 			+ ", numOfBranch: " + features.getNumOfBranch() + ", numOfLoops: " + features.getNumOfLoops()
+												 			+ ", numOfAssignment: " + features.getNumOfAssignment() + ", numOfComments: " + features.getNumOfComments()
+												 			+ ", ofArithmaticOperators: " + features.getNumOfArithmaticOperators() + ", numOfBlankLines: " + features.getNumOfBlankLines()
+												 			+ ", numOfStringLiteral: " + features.getNumOfStringLiteral() + ", numOfLogicalOperators: " + features.getNumOfLogicalOperators()
+												 			+ ", numOfBitOperators: " + features.getNumOfBitOperators() + ", maxNestedControl: " + features.getMaxNestedControl()
+												 			+ ", programVolume: " + features.getProgramVolume() + ", entropy: " + features.getEntropy()
+												 			+ ", averageOfVariableNameLength: " + features.getAverageOfVariableNameLength() + ", averageLineLength: " + features.getAverageLineLength()
+												 			+ ", patternRate: " + features.getPatternRate());
 
 												Readability readability = new Readability();
 												readability.setFeatures(features);
@@ -143,6 +158,7 @@ public class InstantFeedbackActivator extends AbstractUIPlugin
 												User user = createSampleUser();
 												readability.setUser(user);
 
+												logger.info("Readability data is saved in db");
 												db.storeReadability(readability);
 
 												// store current method code for
@@ -176,10 +192,12 @@ public class InstantFeedbackActivator extends AbstractUIPlugin
 	{
 		try
 		{
+			logger.info("Invalidating GaugeView");
 			GaugeView gaugeView = (GaugeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow()
 					.getActivePage().showView(GaugeView.ID);
 			gaugeView.invalidate(readability);
 			
+			logger.info("Invalidating TimelineView");
 			TimelineView timelineView = (TimelineView) PlatformUI.getWorkbench().getActiveWorkbenchWindow()
 					.getActivePage().showView(TimelineView.ID);
 			timelineView.setDBConnector(db);
@@ -196,6 +214,7 @@ public class InstantFeedbackActivator extends AbstractUIPlugin
 	{
 		if (!isDBStartUp)
 		{
+			logger.info("DB setup start");
 			db = DBConnector.getInstance();
 			db.DBSetup();
 			isDBStartUp = true;
