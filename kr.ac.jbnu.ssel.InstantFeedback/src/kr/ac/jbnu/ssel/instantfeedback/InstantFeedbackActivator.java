@@ -18,6 +18,8 @@ import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CaretEvent;
+import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -305,11 +307,30 @@ public class InstantFeedbackActivator extends AbstractUIPlugin
 			public void mouseDown(MouseEvent arg0)
 			{
 				IMethod currentMethod = getCurrentMethodAtCurrentCarrot();
-				// TODO: open Gauge and Readability View of the current method. 
+				if( currentMethod != null)
+				{
+					// TODO: open Gauge and Readability View of the current method. 
+					System.out.println("mouseDown-currentMethod:"+ currentMethod.getElementName());
+				}
 			}
 			
 			@Override
 			public void mouseDoubleClick(MouseEvent arg0){}
+		});
+		
+		((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addCaretListener(new CaretListener()
+		{
+			
+			@Override
+			public void caretMoved(CaretEvent arg0)
+			{
+				IMethod currentMethod = getCurrentMethodAtCurrentCarrot();
+				if( currentMethod != null)
+				{
+					// TODO: open Gauge and Readability View of the current method. 
+					System.out.println("caretMoved-currentMethod:"+ currentMethod.getElementName());
+				}
+			}
 		});
 	}
 	
