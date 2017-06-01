@@ -53,7 +53,7 @@ public class GaugeView extends ViewPart
 		FontDescriptor boldDescriptor = FontDescriptor.createFrom(methodLabel.getFont()).setStyle(SWT.BOLD);
 		Font boldFont = boldDescriptor.createFont(methodLabel.getDisplay());
 		methodLabel.setFont(boldFont);
-		methodLabel.setText("methodName");
+		methodLabel.setText("Readability Gague << methodName >>");
 		
 		//////////////////////////////////////////////////////////////////////////
 		final Canvas canvas = new Canvas(sashForm, SWT.NONE);
@@ -89,7 +89,7 @@ public class GaugeView extends ViewPart
 			@Override
 			public void run() {
 				readabilityGauge.setValue(readability.getReadability());
-				methodLabel.setText(readability.getMethodName());
+				methodLabel.setText("Readability Gague << " + readability.getMethodName() + " >>");
 			}
 		});
 		

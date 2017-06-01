@@ -47,7 +47,7 @@ public class TimelineView extends ViewPart
         lws = new LightweightSystem(canvas);
 		
 		readabilityGraph = new XYGraph();
-		readabilityGraph.setTitle("Readability");
+		readabilityGraph.setTitle("Readability Timeline");
 		readabilityGraph.setFocusTraversable(false);
 		readabilityGraph.setShowLegend(false);
 		readabilityGraph.getPrimaryXAxis().setShowMajorGrid(false);
@@ -56,6 +56,7 @@ public class TimelineView extends ViewPart
 
 	private void setReadabilityData(Readability readability)
 	{
+		readabilityGraph.setTitle("Readability Timeline -" + readability.getMethodName());
 		List<Readability> graphData = db.getGraphData(readability);
 		readabilityGraph.getPrimaryXAxis().setRange((double) graphData.size(), 1.0);
 		readabilityGraph.getPrimaryYAxis().setRange(1.0, 10.0);
@@ -77,7 +78,7 @@ public class TimelineView extends ViewPart
 				, readabilityGraph.getPrimaryYAxis(), traceDataProvider);
 		
 		currentTrace.getYAxis().setTitle("Readability score");
-		currentTrace.getXAxis().setTitle("Previous times");
+		currentTrace.getXAxis().setTitle("Measure Period(Save/Enter/Refactoring)");
 
 		currentTrace.setPointStyle(PointStyle.XCROSS);
 
