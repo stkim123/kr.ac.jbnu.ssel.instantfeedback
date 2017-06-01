@@ -209,7 +209,7 @@ public class InstantFeedbackPreference extends PreferencePage implements IWorkbe
 	
 	private void setDefault(){
 		User user = db.getCurrentUser();
-		if(user != null && !user.getUsername().equals("default")){
+		if(user != null && !user.getUsername().equals("test")){
 			usernameText.setText(user.getUsername());
 			ageText.setText(String.valueOf(user.getAge()));
 			experienceText.setText(String.valueOf(user.getExpierence()));

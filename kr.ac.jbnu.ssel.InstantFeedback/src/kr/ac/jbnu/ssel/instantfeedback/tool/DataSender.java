@@ -29,6 +29,7 @@ public class DataSender {
 					+ "&programVolume=" + readability.getProgramVolume()
 					+ "&entropy=" + readability.getEntropy()
 					+ "&readability=" + readability.getReadability()
+//					+ "&patternRate=" + readability.getPatternRate()
 					+ "&methodName=" + readability.getMethodName()
 					+ "&className=" + readability.getClassName()
 					+ "&username=" + readability.getUser().getUsername()
