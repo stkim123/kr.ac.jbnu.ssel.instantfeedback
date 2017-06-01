@@ -56,7 +56,7 @@ public class TimelineView extends ViewPart
 
 	private void setReadabilityData(Readability readability)
 	{
-		readabilityGraph.setTitle("Readability Timeline -" + readability.getMethodName());
+		readabilityGraph.setTitle("Readability Timeline - " + readability.getMethodName());
 		List<Readability> graphData = db.getGraphData(readability);
 		readabilityGraph.getPrimaryXAxis().setRange((double) graphData.size(), 1.0);
 		readabilityGraph.getPrimaryYAxis().setRange(1.0, 10.0);

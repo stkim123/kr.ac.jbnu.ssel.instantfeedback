@@ -1,7 +1,6 @@
 package kr.ac.jbnu.ssel.instantfeedback;
 
 import java.util.Date;
-import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.resources.IResource;
@@ -39,7 +38,6 @@ import org.osgi.framework.BundleContext;
 import kr.ac.jbnu.ssel.instantfeedback.domain.Features;
 import kr.ac.jbnu.ssel.instantfeedback.domain.Readability;
 import kr.ac.jbnu.ssel.instantfeedback.domain.User;
-import kr.ac.jbnu.ssel.instantfeedback.tool.DataSender;
 import kr.ac.jbnu.ssel.instantfeedback.tool.FeatureExtractor;
 import kr.ac.jbnu.ssel.instantfeedback.tool.db.DBConnector;
 import kr.ac.jbnu.ssel.instantfeedback.views.GaugeView;
@@ -57,18 +55,12 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 	private DBConnector db;
 	private String previousMethodCode;
 	private boolean isDBStartUp = false;
-
+	private IMethod previouslyEditingMethod;
+	
 	/**
 	 * The constructor
 	 */
 	public InstantFeedbackActivator() {
-	}
-
-	private boolean checkSaveKey(KeyEvent e) {
-		if (((e.stateMask & SWT.CTRL) == SWT.CTRL) && (e.keyCode == 's')) {
-			return true;
-		}
-		return false;
 	}
 
 	private boolean checkEnterKey(KeyEvent e) {
@@ -295,9 +287,7 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 			((StyledText) editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addKeyListener(new KeyListener() {
 				@Override
 				public void keyReleased(KeyEvent e) {
-					if (checkEnterKey(e) || checkSemicolone(e)
-					// || checkSaveKey(e)
-					) {
+					if (checkEnterKey(e) || checkSemicolone(e)) {
 						logger.info("View update start");
 						Display.getDefault().asyncExec(new Runnable() {
 							public void run() {
@@ -397,38 +387,39 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 			
 			@Override
 			public void mouseUp(MouseEvent arg0){}
-			{
-			}
 			
 			@Override
 			public void mouseDown(MouseEvent arg0)
 			{
-				IMethod currentMethod = getCurrentMethodAtCurrentCarrot();
-				if( currentMethod != null)
-				{
-					// TODO: open Gauge and Readability View of the current method. 
-					System.out.println("mouseDown-currentMethod:"+ currentMethod.getElementName());
-				}
+				showGaugeNTimelineViewOfCurrentMethod();
 			}
-			
+
 			@Override
 			public void mouseDoubleClick(MouseEvent arg0){}
 		});
 		
 		((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addCaretListener(new CaretListener()
 		{
-			
 			@Override
 			public void caretMoved(CaretEvent arg0)
 			{
-				IMethod currentMethod = getCurrentMethodAtCurrentCarrot();
-				if( currentMethod != null)
-				{
-					// TODO: open Gauge and Readability View of the current method. 
-					System.out.println("caretMoved-currentMethod:"+ currentMethod.getElementName());
-				}
+				showGaugeNTimelineViewOfCurrentMethod();
 			}
 		});
+	}
+	
+	private void showGaugeNTimelineViewOfCurrentMethod()
+	{
+		IMethod currentMethod = getCurrentMethodAtCurrentCarrot();
+		if( currentMethod != null)
+		{
+			if( previouslyEditingMethod != null &&  currentMethod != previouslyEditingMethod)
+			{
+				// TODO: open Gauge and Readability View of the current method. 
+				// TODO: create previous Readability object and pass it into two views. 
+				System.out.println("currentMethod:"+ currentMethod.getElementName());
+			}
+		}
 	}
 	
 	private IMethod getCurrentMethodAtCurrentCarrot()
