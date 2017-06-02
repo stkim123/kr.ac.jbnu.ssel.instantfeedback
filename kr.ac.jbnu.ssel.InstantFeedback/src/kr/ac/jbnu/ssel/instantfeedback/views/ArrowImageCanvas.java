@@ -197,19 +197,14 @@ public class ArrowImageCanvas extends Canvas
 		int arrowImgWidth = arrowImg.width/2;
 		int arrowImgHeight = arrowImg.height/2;
 		
-//		int startImgX = (drawAreaWidth - data.width/2)/2;
 		int startImgX = drawAreaWidth - arrowImgWidth /2;
 		IMG_CENTER_LEFT_MARGIN = startImgX/7; 
 		
-//		gc.drawImage(image, startX, startY);
 		gc.drawImage(image, 0, 0, arrowImg.width, arrowImg.height, startImgX - IMG_CENTER_LEFT_MARGIN , 0, arrowImgWidth, arrowImgHeight);
 
 		Font font = new Font(getDisplay(), "Tahoma", 15, SWT.BOLD);
 		gc.setFont(font);
-//		int startTextY = gaugeScale.getCenter().y + arrowImgHeight/2;
 		int startTextY = arrowImgHeight/2;
-		
-//		System.out.println("gaugeScale.getCenter().y;"+ gaugeScale.getCenter().y + ",arrowImgHeight:"+ arrowImgHeight);
 		gc.drawText(overlayText, startImgX + IMG_CENTER_LEFT_MARGIN, startTextY, SWT.DRAW_TRANSPARENT);
 	}
 
