@@ -59,7 +59,7 @@ public class ArrowImageCanvas extends Canvas
 	private int imageIndex = 0;
 	
 	private int direction = UP;
-	private String overlayText = "+3.5";
+	private String overlayText = "+0.0";
 
 	private MeterFigure readabilityGauge;
 	public ArrowImageCanvas(final Composite parent, MeterFigure readabilityGauge)
@@ -190,29 +190,27 @@ public class ArrowImageCanvas extends Canvas
 	/* Paint function */
 	private void paint(GC gc)
 	{
-		Rectangle clientArea = getClientArea();
-		ImageData data = image.getImageData();
+		org.eclipse.draw2d.geometry.Rectangle gaugeScale = readabilityGauge.getScale().getBounds();
+		ImageData arrowImg = image.getImageData();
 
-		int drawAreaWidth = clientArea.width;
-//		int drawAreaWidth = readabilityGauge.getSize().width;
-//		int drawAreaWidth = readabilityGauge.getClientArea().width;
-//		int drawAreaWidth = readabilityGauge.getPreferredSize().width;
-//		int drawAreaWidth = readabilityGauge.getBounds().width;
-//		int drawAreaWidth1 = readabilityGauge.getMinimumSize().width;
-//		int drawAreaWidth = readabilityGauge.getInsets().getWidth();
-//		int drawAreaWidth2 = readabilityGauge.getMaximumSize().width;
-//		System.out.println("drawAreaWidth2:"+ drawAreaWidth2);
-//		System.out.println("clientArea.width:"+ clientArea.width+ ", drawAreaWidth1:"+ drawAreaWidth1 + ", drawAreaWidth:" + drawAreaWidth);
-		int startImgX = (drawAreaWidth - data.width/2)/2;
-		IMG_CENTER_LEFT_MARGIN = startImgX/5; 
+		int drawAreaWidth = gaugeScale.getCenter().x;
+		int arrowImgWidth = arrowImg.width/2;
+		int arrowImgHeight = arrowImg.height/2;
+		
+//		int startImgX = (drawAreaWidth - data.width/2)/2;
+		int startImgX = drawAreaWidth - arrowImgWidth /2;
+		IMG_CENTER_LEFT_MARGIN = startImgX/7; 
 		
 //		gc.drawImage(image, startX, startY);
-		gc.drawImage(image, 0, 0, data.width, data.height, startImgX - IMG_CENTER_LEFT_MARGIN , 0, data.width / 2, data.height / 2);
+		gc.drawImage(image, 0, 0, arrowImg.width, arrowImg.height, startImgX - IMG_CENTER_LEFT_MARGIN , 0, arrowImgWidth, arrowImgHeight);
 
 		Font font = new Font(getDisplay(), "Tahoma", 15, SWT.BOLD);
 		gc.setFont(font);
-		int startTextY = clientArea.height/2 + clientArea.height/10;
-		gc.drawText(overlayText, startImgX + IMG_CENTER_LEFT_MARGIN*2, startTextY, SWT.DRAW_TRANSPARENT);
+//		int startTextY = gaugeScale.getCenter().y + arrowImgHeight/2;
+		int startTextY = arrowImgHeight/2;
+		
+//		System.out.println("gaugeScale.getCenter().y;"+ gaugeScale.getCenter().y + ",arrowImgHeight:"+ arrowImgHeight);
+		gc.drawText(overlayText, startImgX + IMG_CENTER_LEFT_MARGIN, startTextY, SWT.DRAW_TRANSPARENT);
 	}
 
 	public void setArrowNText(int direction, String text)
