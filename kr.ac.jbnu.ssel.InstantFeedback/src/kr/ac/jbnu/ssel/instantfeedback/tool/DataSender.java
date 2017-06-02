@@ -32,6 +32,8 @@ public class DataSender {
 //					+ "&patternRate=" + readability.getPatternRate()
 					+ "&methodName=" + readability.getMethodName()
 					+ "&className=" + readability.getClassName()
+					+ "&packagename=" + readability.getPackageName()
+					+ "&methodsignature=" + readability.getMethodSignature()
 					+ "&username=" + readability.getUser().getUsername()
 					+ "&storedTime=" + readability.getStoredTime();
 
@@ -64,6 +66,7 @@ public class DataSender {
 					+ "&age=" + user.getAge()
 					+ "&experience=" + user.getExpierence()
 					+ "&javaexperience=" + user.getJavaExpierence()
+					+ "&macaddress=" + user.getMacAddress()
 					+ "&area=" + user.getArea();
 
 			URL obj = new URL(serverUrl + "/saveUser");

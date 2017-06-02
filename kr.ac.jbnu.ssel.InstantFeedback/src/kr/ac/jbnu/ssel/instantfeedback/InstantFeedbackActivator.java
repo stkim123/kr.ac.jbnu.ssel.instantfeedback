@@ -1,8 +1,5 @@
 package kr.ac.jbnu.ssel.instantfeedback;
 
-import java.util.Date;
-import java.util.List;
-
 import org.apache.log4j.Logger;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -19,6 +16,8 @@ import org.eclipse.jdt.ui.JavaUI;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CaretEvent;
+import org.eclipse.swt.custom.CaretListener;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -37,7 +36,6 @@ import org.osgi.framework.BundleContext;
 import kr.ac.jbnu.ssel.instantfeedback.domain.Features;
 import kr.ac.jbnu.ssel.instantfeedback.domain.Readability;
 import kr.ac.jbnu.ssel.instantfeedback.domain.User;
-import kr.ac.jbnu.ssel.instantfeedback.tool.DataSender;
 import kr.ac.jbnu.ssel.instantfeedback.tool.FeatureExtractor;
 import kr.ac.jbnu.ssel.instantfeedback.tool.db.DBConnector;
 import kr.ac.jbnu.ssel.instantfeedback.views.GaugeView;
@@ -82,11 +80,9 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 		return false;
 	}
 
-	////////////////////////////////////////////////////////////
-	// STKIM: for Testing
+	// resource change event listener 
 	class MyResourceChangeReporter implements IResourceChangeListener {
 		public void resourceChanged(IResourceChangeEvent event) {
-			IResource res = event.getResource();
 			if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
 				IResource resource = event.getDelta().getResource();
 				String resFullPath = resource.getFullPath().toString();
@@ -100,28 +96,10 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 			}
 			try {
 				switch (event.getType()) {
-				// case IResourceChangeEvent.PRE_CLOSE:
-				// System.out.print("Project ");
-				// System.out.print(res.getFullPath());
-				// System.out.println(" is about to close.");
-				// break;
-				// case IResourceChangeEvent.PRE_DELETE:
-				// System.out.print("Project ");
-				// System.out.print(res.getFullPath());
-				// System.out.println(" is about to be deleted.");
-				// break;
 				case IResourceChangeEvent.POST_CHANGE:
 					System.out.println("Resources have changed.");
 					event.getDelta().accept(new DeltaPrinter());
 					break;
-				// case IResourceChangeEvent.PRE_BUILD:
-				// System.out.println("Build about to run.");
-				// event.getDelta().accept(new DeltaPrinter());
-				// break;
-				// case IResourceChangeEvent.POST_BUILD:
-				// System.out.println("Build complete.");
-				// event.getDelta().accept(new DeltaPrinter());
-				// break;
 				}
 			} catch (CoreException e) {
 				e.printStackTrace();
@@ -129,22 +107,11 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 		}
 	}
 
-	////////////////////////////////////////////////////////////
-	// STKIM: for Testing
+	// store readability information whenever saving code
 	class DeltaPrinter implements IResourceDeltaVisitor {
 		public boolean visit(IResourceDelta delta) {
 			IResource res = delta.getResource();
 			switch (delta.getKind()) {
-			// case IResourceDelta.ADDED:
-			// System.out.print("Resource ");
-			// System.out.print(res.getFullPath());
-			// System.out.println(" was added.");
-			// break;
-			// case IResourceDelta.REMOVED:
-			// System.out.print("Resource ");
-			// System.out.print(res.getFullPath());
-			// System.out.println(" was removed.");
-			// break;
 			case IResourceDelta.CHANGED:
 				if (res.getFullPath().toString().endsWith(".java")) {
 
@@ -166,8 +133,7 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 										selectedJavaElement = ((ICompilationUnit) javaElement)
 												.getElementAt(textSelection.getOffset());
 
-										// check if the selected java element is
-										// a method
+										// check if the selected java element is a method
 										if (selectedJavaElement != null
 												&& selectedJavaElement.getElementType() == IJavaElement.METHOD) {
 											String className = selectedJavaElement.getParent().getElementName();
@@ -175,7 +141,6 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 													+ "}";
 
 											logger.info("Current method code: " + currentMethodCode);
-											///////////////////////////////////////////////////////////////////////////////////////////
 											// check if the method source is changed compared to previous revision.
 											if (checkIftheMethodisChanged(currentMethodCode)) {
 												FeatureExtractor extractor = new FeatureExtractor();
@@ -208,9 +173,7 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 												readability.setClassName(className);
 												readability.calculateReadability();
 
-												// TODO: Need to remove later.
-												// It is just for testing.
-												User user = createSampleUser();
+												User user = db.getCurrentUser();
 												readability.setUser(user);
 
 												logger.info("Readability data is saved in db");
@@ -232,12 +195,9 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 
 					});
 				}
-				// System.out.print("Resource ");
-				// System.out.print(res.getFullPath());
-				// System.out.println(" has changed.");
 				break;
 			}
-			return true; // visit the children
+			return true;
 		}
 	}
 
@@ -269,11 +229,9 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 		super.start(context);
 		plugin = this;
 
-		////////////////////////////////////////////////////////////////////////////////////////////////
-		//
+		// add shutdown hook
 		Runtime.getRuntime().addShutdownHook(new MyShutdownHook());
-		System.out.println("add shutdown hook!");
-		////////////////////////////////////////////////////////////////////////////////////////////////
+
 		// The following is for capturing save/refactoring events
 		IResourceChangeListener listener = new MyResourceChangeReporter();
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(listener,
@@ -283,12 +241,8 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 				// | IResourceChangeEvent.POST_BUILD
 				// | IResourceChangeEvent.POST_CHANGE);
 				IResourceChangeEvent.POST_CHANGE);
-		System.out.println("add change listener");
-		////////////////////////////////////////////////////////////////////////////////////////////////
-		IWorkbench wb = PlatformUI.getWorkbench();
-		IWorkbenchWindow win = wb.getActiveWorkbenchWindow();
-		IWorkbenchPage page = win.getActivePage();
-		ITextEditor editor = (ITextEditor) page.getActiveEditor();
+
+		ITextEditor editor = getCurrentEditor();
 		if (editor != null) {
 			((StyledText) editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addKeyListener(new KeyListener() {
 				@Override
@@ -309,22 +263,19 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 										selectedJavaElement = ((ICompilationUnit) javaElement)
 												.getElementAt(textSelection.getOffset());
 
-										// check if the selected java element is
-										// a method
+										// check if the selected java element is a method
 										if (selectedJavaElement != null
 												&& selectedJavaElement.getElementType() == IJavaElement.METHOD) {
 											String className = selectedJavaElement.getParent().getElementName();
+											String packageName = selectedJavaElement.getParent().getParent().getParent().getElementName();
+											String methodFullString = selectedJavaElement.toString();
+											String methodSignature = methodFullString.split(" \\[")[0];
+											
 											String currentMethodCode = ((IMethod) selectedJavaElement).getSource()
 													+ "}";
 
 											logger.info("Current method code: " + currentMethodCode);
-											///////////////////////////////////////////////////////////////////////////////////////////
-											// check if the method source is
-											/////////////////////////////////////////////////////////////////////////////////////////// changed
-											/////////////////////////////////////////////////////////////////////////////////////////// compared
-											/////////////////////////////////////////////////////////////////////////////////////////// to
-											/////////////////////////////////////////////////////////////////////////////////////////// previous
-											/////////////////////////////////////////////////////////////////////////////////////////// revision.
+											// check if the method source is changed compared to previous revision.
 											if (checkIftheMethodisChanged(currentMethodCode)) {
 												FeatureExtractor extractor = new FeatureExtractor();
 
@@ -355,22 +306,19 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 												readability.setFeatures(features);
 												readability.setClassName(className);
 												readability.calculateReadability();
+												readability.setMethodSignature(methodSignature);
+												readability.setPackageName(packageName);
 
-												// TODO: Need to remove later.
-												// It is
-												// just for testing.
-												User user = createSampleUser();
+												User user = db.getCurrentUser();
 												readability.setUser(user);
 
 												logger.info("Readability data is saved in db");
 												db.storeReadability(readability);
 
-												// store current method code for
-												// later comparison.
+												// store current method code for later comparison.
 												previousMethodCode = currentMethodCode;
 
-												// request to invalidate the
-												// Gauge view and Timeline view.
+												// request to invalidate the Gauge view and Timeline view.
 												invalidateViews(readability);
 											}
 										}
@@ -401,35 +349,60 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 			@Override
 			public void mouseDown(MouseEvent arg0)
 			{
-				IMethod currentMethod = getCurrentMethodAtCurrentCarrot();
-				// TODO: open Gauge and Readability View of the current method. 
+				showUpdateAndTimelineViews();
 			}
 			
 			@Override
 			public void mouseDoubleClick(MouseEvent arg0){}
 		});
+		
+		((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addCaretListener(new CaretListener()
+		{
+			@Override
+			public void caretMoved(CaretEvent arg0)
+			{
+				showUpdateAndTimelineViews();
+			}
+		});
 	}
 	
-	private IMethod getCurrentMethodAtCurrentCarrot()
+	private void showUpdateAndTimelineViews()
 	{
+		initializeDB();
 		IMethod currentMethod = null;
 		try
 		{
-			IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-			ITextEditor editor = (ITextEditor) page.getActiveEditor();
-			IJavaElement elem = JavaUI.getEditorInputJavaElement(editor.getEditorInput());
-			if (elem instanceof ICompilationUnit) {
-			    ITextSelection sel = (ITextSelection) editor.getSelectionProvider().getSelection();
-			    IJavaElement selected = ((ICompilationUnit) elem).getElementAt(sel.getOffset());
-			    if (selected != null && selected.getElementType() == IJavaElement.METHOD) {
-			    	currentMethod = (IMethod) selected;
-			    }
+			ITextEditor editor = getCurrentEditor();
+			if(editor != null) {
+				
+				IJavaElement elem = JavaUI.getEditorInputJavaElement(editor.getEditorInput());
+				if (elem instanceof ICompilationUnit) {
+					ITextSelection sel = (ITextSelection) editor.getSelectionProvider().getSelection();
+					IJavaElement selected = ((ICompilationUnit) elem).getElementAt(sel.getOffset());
+					if (selected != null && selected.getElementType() == IJavaElement.METHOD) {
+						currentMethod = (IMethod) selected;
+						String methodName = currentMethod.getElementName();
+						String className = selected.getParent().getElementName();
+						String packageName = selected.getParent().getParent().getParent().getElementName();
+						String methodFullString = selected.toString();
+						String methodSignature = methodFullString.split(" \\[")[0];
+						
+						User user = db.getCurrentUser();
+						Readability readability = new Readability();
+						
+						readability.setMethodName(methodName);
+						readability.setClassName(className);
+						readability.setPackageName(packageName);
+						readability.setMethodSignature(methodSignature);
+						readability.setUser(user);
+						showViews(readability);
+					}
+				}
 			}
 		} catch (JavaModelException e)
 		{
 			e.printStackTrace();
 		}
-		return currentMethod;
 	}
 
 	private void invalidateViews(Readability readability) {
@@ -437,6 +410,7 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 			logger.info("Invalidating GaugeView");
 			GaugeView gaugeView = (GaugeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
 					.showView(GaugeView.ID);
+			gaugeView.setDBConnector(db);
 			gaugeView.invalidate(readability);
 
 			logger.info("Invalidating TimelineView");
@@ -448,7 +422,25 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 		} catch (PartInitException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private void showViews(Readability readability) {
+		try {
+			logger.info("Showing GaugeView");
+			GaugeView gaugeView = (GaugeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
+					.showView(GaugeView.ID);
+			gaugeView.setDBConnector(db);
+			gaugeView.showGauge(readability);
 
+			logger.info("Showing TimelineView");
+			TimelineView timelineView = (TimelineView) PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+					.getActivePage().showView(TimelineView.ID);
+			timelineView.setDBConnector(db);
+			timelineView.invalidate(readability);
+
+		} catch (PartInitException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private void initializeDB() {
@@ -458,22 +450,6 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 			db.DBSetup();
 			isDBStartUp = true;
 		}
-	}
-
-	/**
-	 * Need to remove.
-	 * 
-	 * @return
-	 */
-	private User createSampleUser() {
-		User user = new User();
-		user.setUsername("test");
-		user.setAge(1);
-		user.setArea("test");
-		user.setJavaExpierence(1);
-		user.setExpierence(1);
-		user.setCreatedDate(new Date());
-		return user;
 	}
 
 	private boolean checkIftheMethodisChanged(String newMethod) {
@@ -516,5 +492,13 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 	 */
 	public static ImageDescriptor getImageDescriptor(String path) {
 		return imageDescriptorFromPlugin(PLUGIN_ID, path);
+	}
+	
+	private ITextEditor getCurrentEditor() {
+		IWorkbench wb = PlatformUI.getWorkbench();
+		IWorkbenchWindow win = wb.getActiveWorkbenchWindow();
+		IWorkbenchPage page = win.getActivePage();
+		ITextEditor editor = (ITextEditor) page.getActiveEditor();
+		return editor;
 	}
 }

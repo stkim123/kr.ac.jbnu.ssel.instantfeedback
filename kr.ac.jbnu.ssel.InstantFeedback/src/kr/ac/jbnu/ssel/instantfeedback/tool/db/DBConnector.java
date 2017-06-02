@@ -1,6 +1,7 @@
 package kr.ac.jbnu.ssel.instantfeedback.tool.db;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -50,31 +51,39 @@ public class DBConnector {
 			dbServer = HSQLDBClass.startServer(Constants.readabilityDBName, Constants.DBPath, readability_logWriter);
 
 			setConnection("sa", "");
+			dbConnection.setAutoCommit(true);
 
 			Statement stmt = dbConnection.createStatement();
 
-			stmt.execute("drop table  if exists user");
+//			stmt.execute("drop table  if exists readability");
+//			stmt.execute("drop table  if exists user");
 			stmt.execute("CREATE TABLE IF NOT EXISTS user ( username VARCHAR(32) NOT NULL UNIQUE, age INTEGER,"
 					+ "expierence INTEGER, javaExpierence INTEGER, area VARCHAR(32), createdTime datetime"
 					+ ", macAddress VARCHAR(50), isSended BIT(1) default 0);");
 
-			User user = createDefaultUser();
-			saveUserData(user);
+			createDefaultUser();
 			
-			stmt.execute("drop table  if exists readability");
 			stmt.execute("CREATE TABLE IF NOT EXISTS readability ( id INTEGER NOT NULL IDENTITY"
-					+ ",LOC INTEGER DEFAULT NULL, " + "numOfComments INTEGER DEFAULT NULL"
-					+ ",numOfBlankLines INTEGER DEFAULT NULL," + "numOfBitOperators INTEGER DEFAULT NULL"
-					+ ",readability double DEFAULT NULL," + "username varchar(255) DEFAULT NULL"
-					+ ",storedTime datetime DEFAULT NULL," + "methodname varchar(255) DEFAULT NULL"
+					+ ",LOC INTEGER DEFAULT NULL, "
+					+ "numOfComments INTEGER DEFAULT NULL"
+					+ ",numOfBlankLines INTEGER DEFAULT NULL"
+					+ ",numOfBitOperators INTEGER DEFAULT NULL"
+					+ ",readability double DEFAULT NULL"
+					+ ",username varchar(255) DEFAULT NULL"
+					+ ",storedTime datetime DEFAULT NULL"
+					+ ",methodname varchar(255) DEFAULT NULL"
 					+ ",classname varchar(255) DEFAULT NULL"
+					+ ",packagename varchar(255) DEFAULT NULL"
+					+ ",methodsignature varchar(255) DEFAULT NULL"
 					// + ",patternrate double DEFAULT NULL"
-					+ ",maxNestedControl INTEGER DEFAULT NULL," + "programVolume double DEFAULT NULL"
+					+ ",maxNestedControl INTEGER DEFAULT NULL"
+					+ ",programVolume double DEFAULT NULL"
 					+ ",entropy double DEFAULT NULL"
-					// + "CONSTRAINT username FOREIGN KEY (username) REFERENCES
-					// user (username) ON DELETE NO ACTION ON UPDATE NO ACTION"
+					+ ", CONSTRAINT username FOREIGN KEY (username) REFERENCES "
+					+ "user(username) ON DELETE NO ACTION ON UPDATE NO ACTION"
 					+ ",isSended BIT(1) default 0"
 					+ ");");
+			
 //			deleteData();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -85,8 +94,13 @@ public class DBConnector {
 		}
 	}
 
-	private User createDefaultUser() {
-		User user = new User();
+	private void createDefaultUser() {
+		User user = getCurrentUser();
+		
+		if(user != null)
+			return;
+		
+		user = new User();
 		user.setUsername("test");
 		user.setAge(1);
 		user.setArea("test");
@@ -104,8 +118,6 @@ public class DBConnector {
 	
 			byte[] mac = network.getHardwareAddress();
 	
-			System.out.print("Current MAC address : ");
-	
 			for (int i = 0; i < mac.length; i++) {
 				macString.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
 			}
@@ -116,7 +128,7 @@ public class DBConnector {
 		}
 		user.setMacAddress(macString.toString());
 		
-		return user;
+		saveUserData(user);
 	}
 
 	private PrintWriter createLogWriter(String logFileName, boolean append, boolean autoFlush) throws IOException {
@@ -153,8 +165,8 @@ public class DBConnector {
 			// patternRate, maxNestedControl, programVolume, entropy) VALUES("
 			// + "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 			String readabilityInsert = "INSERT INTO readability (LOC, numOfComments, numOfBlankLines, numOfBitOperators,"
-					+ " readability, username, storedTime, methodname, classname, maxNestedControl, programVolume, entropy) VALUES("
-					+ "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+					+ " readability, username, storedTime, methodname, classname, packagename, methodsignature, maxNestedControl, programVolume, entropy) VALUES("
+					+ "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 			PreparedStatement stmt = dbConnection.prepareStatement(readabilityInsert);
 			stmt.setInt(1, readability.getLOC());
 			stmt.setInt(2, readability.getNumOfComments());
@@ -165,10 +177,12 @@ public class DBConnector {
 			stmt.setDate(7, new java.sql.Date(readability.getStoredTime().getTime()));
 			stmt.setString(8, readability.getMethodName());
 			stmt.setString(9, readability.getClassName());
+			stmt.setString(10, readability.getPackageName());
+			stmt.setString(11, readability.getMethodSignature());
 			// stmt.setDouble(10, readability.getPatternRate());
-			stmt.setInt(10, readability.getMaxNestedControl());
-			stmt.setDouble(11, readability.getProgramVolume());
-			stmt.setDouble(12, readability.getEntropy());
+			stmt.setInt(12, readability.getMaxNestedControl());
+			stmt.setDouble(13, readability.getProgramVolume());
+			stmt.setDouble(14, readability.getEntropy());
 
 			// Statement stmt = dbConnection.createStatement();
 			// stmt.executeUpdate(
@@ -217,6 +231,8 @@ public class DBConnector {
 				readabilityInfo.setReadability(rs.getDouble("readability"));
 				readabilityInfo.setMethodName(rs.getString("methodname"));
 				readabilityInfo.setClassName(rs.getString("classname"));
+				readabilityInfo.setPackageName(rs.getString("packagename"));
+				readabilityInfo.setMethodSignature(rs.getString("methodsignature"));
 				readabilityInfo.setStoredTime(rs.getDate("storedTime"));
 				readabilityInfo.setUser(user);
 				readabilities.add(readabilityInfo);
@@ -225,11 +241,30 @@ public class DBConnector {
 			e.printStackTrace();
 		}
 
-		for (Readability readability : readabilities) {
-
+		return readabilities;
+	}
+	
+	public Readability getLastReadability(Readability readability) {
+		Readability readabilityInfo = null;
+		try {
+			Statement stmt = dbConnection.createStatement();
+			ResultSet rs = stmt.executeQuery("select * from readability where "
+					+ "username='" + readability.getUser().getUsername()
+					+ "' and packagename='" + readability.getPackageName()
+					+ "' and classname='" + readability.getClassName()
+					+ "' and methodname='" + readability.getMethodName()
+					+ "' and methodsignature='" + readability.getMethodSignature()
+					+ "' ORDER BY id DESC");
+			
+			if(rs.next() && rs.next()){
+				readabilityInfo = new Readability();
+				readabilityInfo.setReadability(rs.getDouble("readability"));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 
-		return readabilities;
+		return readabilityInfo;
 	}
 
 	public void saveUserData(User user) {
@@ -261,9 +296,10 @@ public class DBConnector {
 		try {
 			Statement stmt = dbConnection.createStatement();
 			ResultSet rs = stmt.executeQuery("select * from readability where "
-//					+ "username='" + user.getUsername()
-//					+ "' and methodname='" + source.getMethodName() + "' and classname='" + source.getClassName()
-					+ "methodname='" + source.getMethodName() + "' and classname='" + source.getClassName()
+					+ "username='" + user.getUsername()
+					+ "' and methodname='" + source.getMethodName() + "' and classname='" + source.getClassName()
+//					+ "methodname='" + source.getMethodName() + "' and classname='" + source.getClassName()
+					+ "' and packagename='" + source.getPackageName() + "' and methodsignature='"+source.getMethodSignature() 
 					+ "' order by storedTime desc;");
 
 			Readability readabilityInfo = null;
@@ -272,6 +308,8 @@ public class DBConnector {
 				readabilityInfo.setReadability(rs.getDouble("readability"));
 				readabilityInfo.setMethodName(rs.getString("methodname"));
 				readabilityInfo.setClassName(rs.getString("classname"));
+				readabilityInfo.setPackageName(rs.getString("packagename"));
+				readabilityInfo.setMethodSignature(rs.getString("methodsignature"));
 				readabilities.add(readabilityInfo);
 			}
 		} catch (SQLException e) {
@@ -346,6 +384,8 @@ public class DBConnector {
 				readabilityInfo.setReadability(rs.getDouble("readability"));
 				readabilityInfo.setMethodName(rs.getString("methodname"));
 				readabilityInfo.setClassName(rs.getString("classname"));
+				readabilityInfo.setPackageName(rs.getString("packagename"));
+				readabilityInfo.setMethodSignature(rs.getString("methodsignature"));
 				readabilityInfo.setStoredTime(rs.getDate("storedTime"));
 				User searchedUser = new User();
 				searchedUser.setUsername(rs.getString("username"));
@@ -434,20 +474,6 @@ public class DBConnector {
 
 	public User getCurrentUser() {
 		User result = null;
-		// Preferences preferences = ConfigurationScope.INSTANCE
-		// .getNode(Constants.preferencesName);
-		// Preferences userPreferences =
-		// preferences.node(Constants.preferencesUserNode);
-		//
-		// result = new User();
-		// result.setUsername(userPreferences.get(Constants.usernamePref,
-		// "default"));
-		// result.setAge(userPreferences.getInt(Constants.agePref, 0));
-		// result.setJavaExpierence(userPreferences.getInt(Constants.javaexperiencePref,
-		// 0));
-		// result.setExpierence(userPreferences.getInt(Constants.experiencePref,
-		// 0));
-		// result.setArea(userPreferences.get(Constants.areaPref, "default"));
 
 		try {
 			Statement stmt = dbConnection.createStatement();
@@ -459,6 +485,7 @@ public class DBConnector {
 				result.setArea(rs.getString("area"));
 				result.setExpierence(rs.getInt("expierence"));
 				result.setJavaExpierence(rs.getInt("javaexpierence"));
+				result.setMacAddress(rs.getString("macAddress"));
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -481,6 +508,7 @@ public class DBConnector {
 				result.setArea(rs.getString("area"));
 				result.setExpierence(rs.getInt("expierence"));
 				result.setJavaExpierence(rs.getInt("javaexpierence"));
+				result.setMacAddress(rs.getString("macAddress"));
 				allUsers.add(result);
 			}
 		} catch (SQLException e) {
@@ -510,6 +538,8 @@ public class DBConnector {
 				readabilityInfo.setReadability(rs.getDouble("readability"));
 				readabilityInfo.setMethodName(rs.getString("methodname"));
 				readabilityInfo.setClassName(rs.getString("classname"));
+				readabilityInfo.setPackageName(rs.getString("packagename"));
+				readabilityInfo.setMethodSignature(rs.getString("methodsignature"));
 				readabilityInfo.setStoredTime(rs.getDate("storedTime"));
 				User searchedUser = new User();
 				searchedUser.setUsername(rs.getString("username"));

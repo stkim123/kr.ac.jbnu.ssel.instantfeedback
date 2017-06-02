@@ -20,6 +20,8 @@ public class Readability {
 	private Date storedTime;
 	private String methodName;
 	private String className;
+	private String packageName;
+	private String methodSignature;
 	private User user;
 	
 	public Readability() {
@@ -78,6 +80,22 @@ public class Readability {
 		this.className = className;
 	}
 	
+	public String getPackageName() {
+		return packageName;
+	}
+
+	public void setPackageName(String packageName) {
+		this.packageName = packageName;
+	}
+
+	public String getMethodSignature() {
+		return methodSignature;
+	}
+
+	public void setMethodSignature(String signature) {
+		this.methodSignature = signature;
+	}
+
 	public int getLOC() {
 		return LOC;
 	}
@@ -157,6 +175,7 @@ public class Readability {
 		setMaxNestedControl(features.getMaxNestedControl());
 		setProgramVolume(features.getProgramVolume());
 		setEntropy(features.getEntropy());
+		setPackageName(features.getPackageName());
 		setClassName(features.getClassName());
 		setMethodName(features.getMethodName());
 		setPatternRate(features.getPatternRate());

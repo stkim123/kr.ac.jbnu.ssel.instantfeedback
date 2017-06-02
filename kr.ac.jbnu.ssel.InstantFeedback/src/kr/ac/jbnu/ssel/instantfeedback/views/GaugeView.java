@@ -17,6 +17,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.part.ViewPart;
 
 import kr.ac.jbnu.ssel.instantfeedback.domain.Readability;
+import kr.ac.jbnu.ssel.instantfeedback.tool.db.DBConnector;
 
 public class GaugeView extends ViewPart
 {
@@ -24,13 +25,10 @@ public class GaugeView extends ViewPart
 	
 	private static Logger logger = Logger.getLogger(GaugeView.class);
 	
-	// private String serverUrl = "http://210.117.128.248:1005/readability";
-//	private String serverUrl = "http://175.249.158.207:8080/readability";
-	// private String serverUrl = "http://localhost:8080/readability";
-
 	private MeterFigure readabilityGauge;
 	private Label methodLabel;
 	private ArrowImageCanvas swtImgCanvas; 
+	private DBConnector db;
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -93,6 +91,13 @@ public class GaugeView extends ViewPart
 			}
 		});
 		
+		if(previousReadability == 0)
+		{
+			Readability prevReadability = db.getLastReadability(readability);
+			if(prevReadability != null)
+				previousReadability = prevReadability.getReadability(); 
+		}
+		
 		double gap = readability.getReadability() - previousReadability;
 		int direction = ArrowImageCanvas.UP;
 		String sign = "";
@@ -111,60 +116,39 @@ public class GaugeView extends ViewPart
 		previousReadability = readability.getReadability();
 		logger.info("Invalidating GaugeView is completed");
 	}
-
-	public class ReadabilityScore extends Canvas {
-		private MeterFigure readabilityGauge;
-		private Label methodLabel;
-
-		public ReadabilityScore(Composite parent, int style) {
-			super(parent, style);
-
-			FillLayout layout = new FillLayout();
-			layout.type = SWT.VERTICAL;
-			parent.setLayout(layout);
-			
-			final Canvas canvas = new Canvas(parent, SWT.NONE);
-			LightweightSystem lws = new LightweightSystem(canvas);
-			readabilityGauge = new MeterFigure();
-			readabilityGauge.setBackgroundColor(XYGraphMediaFactory.getInstance().getColor(255, 255, 255));
-			readabilityGauge.setValueLabelVisibility(true);
-			readabilityGauge.setRange(0, 10);
-			readabilityGauge.setLoLevel(3.5);
-			readabilityGauge.setLoloLevel(2);
-			readabilityGauge.setHiLevel(8.5);
-			readabilityGauge.setHihiLevel(7);
-			readabilityGauge.setMajorTickMarkStepHint(8);
-
-			lws.setContents(readabilityGauge);
-			
-			GridData gridData = new GridData();
-			gridData.horizontalAlignment = GridData.FILL;
-			gridData.grabExcessHorizontalSpace = true;
-			setLayoutData(gridData);
-
-			methodLabel = new Label(parent, SWT.CENTER);
-			FontDescriptor boldDescriptor = FontDescriptor.createFrom(methodLabel.getFont()).setStyle(SWT.BOLD);
-			Font boldFont = boldDescriptor.createFont(methodLabel.getDisplay());
-			methodLabel.setFont(boldFont);
-			methodLabel.setText("methodName");
-
-			methodLabel.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, true, true));
-			//////////////////////////////////////////////////////////////////////////////////
-			
-//			SWTImageCanvas swtImgCanvas= new SWTImageCanvas(parent);
-//			swtImgCanvas.startThreadForTest();
-//			swtImgCanvas.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-
-		}
-
-		public void setValue(Readability readability) {
-			this.getDisplay().asyncExec(new Runnable() {
-				@Override
-				public void run() {
-					readabilityGauge.setValue(readability.getReadability());
-					methodLabel.setText(readability.getMethodName());
+	
+	public void showGauge(Readability readability)
+	{
+		Display.getDefault().asyncExec(new Runnable() {
+			@Override
+			public void run() {
+				Readability lastReadability = db.getLastReadability(readability);
+				if(lastReadability == null) {
+					readabilityGauge.setValue(0.0);
+				}else{
+					readabilityGauge.setValue(lastReadability.getReadability());
 				}
-			});
+				methodLabel.setText("Readability Gague << " + readability.getMethodName() + " >>");
+			}
+		});
+		
+		if(previousReadability == 0)
+		{
+			Readability prevReadability = db.getLastReadability(readability);
+			if(prevReadability != null)
+				previousReadability = prevReadability.getReadability(); 
 		}
+		
+		double gap = 0.0;
+		int direction = ArrowImageCanvas.UP;
+		String sign = "";
+		
+		swtImgCanvas.setArrowNText(direction, sign + " " +  String.format("%.2f", gap));
+		previousReadability = readability.getReadability();
+		logger.info("Showing GaugeView is completed");
+	}
+
+	public void setDBConnector(DBConnector db) {
+		this.db = db;
 	}
 }

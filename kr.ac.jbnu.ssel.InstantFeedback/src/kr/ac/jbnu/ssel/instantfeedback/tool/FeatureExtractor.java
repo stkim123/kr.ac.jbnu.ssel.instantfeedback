@@ -30,6 +30,7 @@ import org.eclipse.jdt.core.dom.InfixExpression;
 import org.eclipse.jdt.core.dom.LineComment;
 import org.eclipse.jdt.core.dom.MethodDeclaration;
 import org.eclipse.jdt.core.dom.MethodInvocation;
+import org.eclipse.jdt.core.dom.PackageDeclaration;
 import org.eclipse.jdt.core.dom.PostfixExpression;
 import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.Statement;
@@ -44,12 +45,9 @@ import kr.ac.jbnu.ssel.instantfeedback.tool.Xmeans.Cluster;
 
 public class FeatureExtractor {
 	
-	private static String temporaryFileName = "temp.java";
-
 	private Features features;
 	private int nestedControl = 0;
 	private List<Integer> nestedControlList = new ArrayList<Integer>();
-	private File tempFile;
 	private IdentifierParser identifierParser;
 
 	public Features extractFeatures(String methodBody) {
@@ -214,7 +212,7 @@ public class FeatureExtractor {
 				}
 				return super.visit(node);
 			}
-
+			
 			@Override
 			public boolean visit(SimpleName node) {
 				String identifier = node.getIdentifier();

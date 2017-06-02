@@ -1,5 +1,9 @@
 package kr.ac.jbnu.ssel.instantfeedback.preferences;
 
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -165,25 +169,6 @@ public class InstantFeedbackPreference extends PreferencePage implements IWorkbe
 				user.setJavaExpierence(javaexperience);
 				user.setCreatedDate(new Date());
 				
-//				Preferences preferences = ConfigurationScope.INSTANCE
-//                        .getNode(Constants.preferencesName);
-//				Preferences userPreferences = preferences.node(Constants.preferencesUserNode);
-//				try {
-//					userPreferences.clear();
-//				} catch (BackingStoreException e1) {
-//					e1.printStackTrace();
-//				}
-//				userPreferences.put(Constants.usernamePref, username );
-//				userPreferences.putInt(Constants.agePref, age );
-//				userPreferences.put(Constants.areaPref, workField);
-//				userPreferences.putInt(Constants.experiencePref, experience);
-//				userPreferences.putInt(Constants.javaexperiencePref, javaexperience);
-//				
-//				try {
-//					userPreferences.flush();
-//				} catch (BackingStoreException e1) {
-//					e1.printStackTrace();
-//				}
 				SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 				SimpleDateFormat formatter2 = new SimpleDateFormat("EE MMM dd HH:mm:ss z yyyy",
 		                Locale.ENGLISH);
@@ -196,6 +181,25 @@ public class InstantFeedbackPreference extends PreferencePage implements IWorkbe
 					e1.printStackTrace();
 				}
 				String curDateString = formatter.format(curDate);
+				
+				InetAddress ip;
+				StringBuilder macString = new StringBuilder();
+				try {
+					ip = InetAddress.getLocalHost();
+			
+					NetworkInterface network = NetworkInterface.getByInetAddress(ip);
+			
+					byte[] mac = network.getHardwareAddress();
+			
+					for (int i = 0; i < mac.length; i++) {
+						macString.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? "-" : ""));
+					}
+				}  catch (UnknownHostException exception) {
+					exception.printStackTrace();
+				} catch (SocketException exception){
+					exception.printStackTrace();
+				}
+				user.setMacAddress(macString.toString());
 				
 				logger.info("User infomation saved("+ username + ", " + age + ", " + workField + ", "
 						 	+ experience + ", " + javaexperience + ", " + curDateString);
