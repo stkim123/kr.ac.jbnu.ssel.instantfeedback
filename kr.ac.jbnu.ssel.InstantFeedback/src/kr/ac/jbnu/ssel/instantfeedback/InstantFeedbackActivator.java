@@ -60,13 +60,6 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 	public InstantFeedbackActivator() {
 	}
 
-	private boolean checkSaveKey(KeyEvent e) {
-		if (((e.stateMask & SWT.CTRL) == SWT.CTRL) && (e.keyCode == 's')) {
-			return true;
-		}
-		return false;
-	}
-
 	private boolean checkEnterKey(KeyEvent e) {
 		if (e.keyCode == SWT.CR || e.keyCode == SWT.KEYPAD_CR)
 			return true;
@@ -247,9 +240,7 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 			((StyledText) editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addKeyListener(new KeyListener() {
 				@Override
 				public void keyReleased(KeyEvent e) {
-					if (checkEnterKey(e) || checkSemicolone(e)
-					// || checkSaveKey(e)
-					) {
+					if (checkEnterKey(e) || checkSemicolone(e)) {
 						logger.info("View update start");
 						Display.getDefault().asyncExec(new Runnable() {
 							public void run() {
@@ -349,7 +340,7 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 			@Override
 			public void mouseDown(MouseEvent arg0)
 			{
-				showUpdateAndTimelineViews();
+				showGaugeNTimelineViewOfCurrentMethod();
 			}
 			
 			@Override
@@ -361,12 +352,12 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 			@Override
 			public void caretMoved(CaretEvent arg0)
 			{
-				showUpdateAndTimelineViews();
+				showGaugeNTimelineViewOfCurrentMethod();
 			}
 		});
 	}
 	
-	private void showUpdateAndTimelineViews()
+	private void showGaugeNTimelineViewOfCurrentMethod()
 	{
 		initializeDB();
 		IMethod currentMethod = null;

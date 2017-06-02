@@ -7,21 +7,7 @@
 *******************************************************************************/
 package kr.ac.jbnu.ssel.instantfeedback.views;
 
-import java.util.Map;
-
-import org.eclipse.jdt.core.ElementChangedEvent;
-import org.eclipse.jdt.core.ICompilationUnit;
-import org.eclipse.jdt.core.IElementChangedListener;
-import org.eclipse.jdt.core.IJavaElement;
-import org.eclipse.jdt.core.JavaCore;
-import org.eclipse.jdt.core.dom.AST;
-import org.eclipse.jdt.core.dom.ASTParser;
-import org.eclipse.jdt.core.dom.ASTVisitor;
-import org.eclipse.jdt.core.dom.ClassInstanceCreation;
-import org.eclipse.jdt.core.dom.CompilationUnit;
-import org.eclipse.jdt.core.dom.ForStatement;
-import org.eclipse.jdt.core.dom.IfStatement;
-import org.eclipse.jdt.internal.core.JavaElementDelta;
+import org.eclipse.nebula.visualization.widgets.figures.MeterFigure;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ControlListener;
@@ -73,11 +59,13 @@ public class ArrowImageCanvas extends Canvas
 	private int imageIndex = 0;
 	
 	private int direction = UP;
-	private String overlayText = "+3.5";
+	private String overlayText = "+0.0";
 
-	public ArrowImageCanvas(final Composite parent)
+	private MeterFigure readabilityGauge;
+	public ArrowImageCanvas(final Composite parent, MeterFigure readabilityGauge)
 	{
 		this(parent, SWT.NULL);
+		this.readabilityGauge = readabilityGauge;
 	}
 
 	public void requestToDraw()
@@ -202,20 +190,22 @@ public class ArrowImageCanvas extends Canvas
 	/* Paint function */
 	private void paint(GC gc)
 	{
-		Rectangle clientArea = getClientArea();
+		org.eclipse.draw2d.geometry.Rectangle gaugeScale = readabilityGauge.getScale().getBounds();
+		ImageData arrowImg = image.getImageData();
+
+		int drawAreaWidth = gaugeScale.getCenter().x;
+		int arrowImgWidth = arrowImg.width/2;
+		int arrowImgHeight = arrowImg.height/2;
 		
-		ImageData data = image.getImageData();
+		int startImgX = drawAreaWidth - arrowImgWidth /2;
+		IMG_CENTER_LEFT_MARGIN = startImgX/7; 
 		
-		int startImgX = (clientArea.width - data.width/2)/2;
-		IMG_CENTER_LEFT_MARGIN = startImgX/5; 
-		
-//		gc.drawImage(image, startX, startY);
-		gc.drawImage(image, 0, 0, data.width, data.height, startImgX - IMG_CENTER_LEFT_MARGIN , 0, data.width / 2, data.height / 2);
+		gc.drawImage(image, 0, 0, arrowImg.width, arrowImg.height, startImgX - IMG_CENTER_LEFT_MARGIN , 0, arrowImgWidth, arrowImgHeight);
 
 		Font font = new Font(getDisplay(), "Tahoma", 15, SWT.BOLD);
 		gc.setFont(font);
-		int startTextY = clientArea.height/2 + clientArea.height/10;
-		gc.drawText(overlayText, startImgX + IMG_CENTER_LEFT_MARGIN*2, startTextY, SWT.DRAW_TRANSPARENT);
+		int startTextY = arrowImgHeight/2;
+		gc.drawText(overlayText, startImgX + IMG_CENTER_LEFT_MARGIN, startTextY, SWT.DRAW_TRANSPARENT);
 	}
 
 	public void setArrowNText(int direction, String text)
