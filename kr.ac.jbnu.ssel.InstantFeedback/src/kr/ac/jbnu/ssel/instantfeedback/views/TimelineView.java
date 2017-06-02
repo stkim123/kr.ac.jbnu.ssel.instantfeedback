@@ -1,11 +1,11 @@
 package kr.ac.jbnu.ssel.instantfeedback.views;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.eclipse.draw2d.LightweightSystem;
 import org.eclipse.nebula.visualization.xygraph.dataprovider.CircularBufferDataProvider;
-import org.eclipse.nebula.visualization.xygraph.figures.Axis;
 import org.eclipse.nebula.visualization.xygraph.figures.Trace;
 import org.eclipse.nebula.visualization.xygraph.figures.Trace.PointStyle;
 import org.eclipse.nebula.visualization.xygraph.figures.XYGraph;
@@ -16,7 +16,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
-import kr.ac.jbnu.ssel.instantfeedback.InstantFeedbackActivator;
+import kr.ac.jbnu.ssel.instantfeedback.Constants;
 import kr.ac.jbnu.ssel.instantfeedback.domain.Readability;
 import kr.ac.jbnu.ssel.instantfeedback.tool.db.DBConnector;
 
@@ -58,14 +58,16 @@ public class TimelineView extends ViewPart
 	{
 		readabilityGraph.setTitle("Readability Timeline - " + readability.getMethodName());
 		List<Readability> graphData = db.getGraphData(readability);
-		readabilityGraph.getPrimaryXAxis().setRange((double) graphData.size(), 1.0);
+		graphData = groupData(graphData);
+		graphData = addEmptyData(graphData);
+		readabilityGraph.getPrimaryXAxis().setRange(Constants.maxGraphResult, 1.0);
 		readabilityGraph.getPrimaryYAxis().setRange(1.0, 10.0);
 		
 		double[] xValues = new double [graphData.size()];
 		double[] yValues = new double [graphData.size()];
 		for(int i=0; i<graphData.size(); i++)
 		{
-			xValues[i] = (double)(i+1);
+			xValues[i] = 15.0 - (double)(i);
 			yValues[i] = graphData.get(i).getReadability();
 		}
 		
@@ -93,6 +95,44 @@ public class TimelineView extends ViewPart
 		lws.setContents(readabilityGraph);
 		readabilityGraph.repaint();
 		logger.info("Invalidating TimelinView is completed");
+	}
+
+	private List<Readability> groupData(List<Readability> originalData) {
+		List<Readability> result = new ArrayList<Readability>();
+		int arraySize = originalData.size();
+		for(int i=0; i<arraySize; i=i+3){
+			double average = 0.0;
+			if(i+2 >= originalData.size()){
+				double sum = 0.0;
+				int count = 0;
+				for (int j = i; j < arraySize; j++) {
+					sum = sum + originalData.get(j).getReadability();
+					count++;
+				}
+				average = sum / (double) count;
+			} else {
+				average = originalData.get(i).getReadability() + originalData.get(i+1).getReadability()
+						+ originalData.get(i+2).getReadability();  
+			}
+			Readability readabilityInfo = new Readability();
+			readabilityInfo.setReadability(average);
+			result.add(readabilityInfo);
+		}
+		return originalData;
+	}
+	
+	private List<Readability> addEmptyData(List<Readability>graphData){
+		if(graphData.size() < Constants.maxGraphResult)
+		{
+			int gap = Constants.maxGraphResult - graphData.size(); 
+			for (int i = 0; i < gap; i++) {
+				Readability readabilityInfo = new Readability();
+				readabilityInfo.setReadability(0.0);
+				graphData.add(0, readabilityInfo);
+			}
+		}
+		
+		return graphData;
 	}
 
 	@Override

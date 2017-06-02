@@ -107,6 +107,7 @@ public class DBConnector {
 		user.setJavaExpierence(1);
 		user.setExpierence(1);
 		user.setCreatedDate(new Date());
+		user.setSended(true);
 		
 		InetAddress ip;
 		StringBuilder macString = new StringBuilder("");
@@ -271,9 +272,6 @@ public class DBConnector {
 		try {
 			String userInsert = "INSERT INTO user (username, age, expierence, javaExpierence, area, createdTime) VALUES(?,?,?,?,?,?)";
 
-			Statement deleteStmt = dbConnection.createStatement();
-			deleteStmt.execute("delete from user");
-
 			PreparedStatement insertStmt = dbConnection.prepareStatement(userInsert);
 			insertStmt.setString(1, user.getUsername());
 			insertStmt.setInt(2, user.getAge());
@@ -300,7 +298,7 @@ public class DBConnector {
 					+ "' and methodname='" + source.getMethodName() + "' and classname='" + source.getClassName()
 //					+ "methodname='" + source.getMethodName() + "' and classname='" + source.getClassName()
 					+ "' and packagename='" + source.getPackageName() + "' and methodsignature='"+source.getMethodSignature() 
-					+ "' order by storedTime desc;");
+					+ "' order by storedTime desc limit "+ Constants.maxGraphResult*3 + ";");
 
 			Readability readabilityInfo = null;
 			while (rs.next()) {
@@ -316,14 +314,14 @@ public class DBConnector {
 			e.printStackTrace();
 		}
 
-		for (Readability readability : readabilities) {
-//			String storedMethodName = readability.getMethodName();
-//			String storedClassName = readability.getClassName();
-//			if (storedClassName.equals(source.getClassName()) && storedMethodName.equals(source.getMethodName()))
-				result.add(readability);
-			if (result.size() == Constants.maxGraphResult)
-				break;
-		}
+//		for (Readability readability : readabilities) {
+////			String storedMethodName = readability.getMethodName();
+////			String storedClassName = readability.getClassName();
+////			if (storedClassName.equals(source.getClassName()) && storedMethodName.equals(source.getMethodName()))
+//				result.add(readability);
+//			if (result.size() == Constants.maxGraphResult)
+//				break;
+//		}
 
 		// try {
 		// String mappedData = "username=test1&methodName=" +
@@ -499,7 +497,7 @@ public class DBConnector {
 		
 		try {
 			Statement stmt = dbConnection.createStatement();
-			ResultSet rs = stmt.executeQuery("select * from user ORDER BY createdTime DESC;");
+			ResultSet rs = stmt.executeQuery("select * from user where sended = 0;");
 			User result = null;
 			while(rs.next()){
 				result = new User();
@@ -523,7 +521,7 @@ public class DBConnector {
 		
 		try {
 			Statement stmt = dbConnection.createStatement();
-			ResultSet rs = stmt.executeQuery("select * from readability");
+			ResultSet rs = stmt.executeQuery("select * from readability sended = 0;");
 
 			Readability readabilityInfo = null;
 			while (rs.next()) {
@@ -551,6 +549,28 @@ public class DBConnector {
 		}
 		
 		return readabilities;
+	}
+	
+	public void checkSendedUser(){
+		try {
+			String sendedSql = "update user set sended = 1 where sended=0";
+
+			Statement updateStmt = dbConnection.createStatement();
+			updateStmt.executeUpdate(sendedSql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public void checkSenedReadability(){
+		try {
+			String sendedSql = "update readability set sended = 1 where sended=0";
+
+			Statement updateStmt = dbConnection.createStatement();
+			updateStmt.executeUpdate(sendedSql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void closeDBServer() {

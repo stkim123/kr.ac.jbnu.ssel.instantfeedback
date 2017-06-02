@@ -22,7 +22,7 @@ public class Constants {
 	public static final String CSV_DELIM = ",";
 	public static final String LINE_SEPARATER = "\r\n";
 	
-	public static final int maxGraphResult = 30;
+	public static final int maxGraphResult = 15;
 	
 //	public static final String wekaCSVPath = Utils.getEclipsePackageDirOfClass(R.class)+ "\\DTM.csv"; 
 //	public static final String simianPath = Utils.getEclipsePackageDirOfClass(R.class)+ "\\simianTempClass.java";

@@ -197,18 +197,19 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 	class MyShutdownHook extends Thread {
 		@Override
 		public void run() {
-//			DBConnector db = DBConnector.getInstance();
 //			DataSender sender = new DataSender();
 //			
 //			List<User> allUsers = db.getAllUsers();
 //			for (User user : allUsers) {
 //				sender.saveUserToServer(user);
 //			}
+//			db.checkSendedUser();
 //			
 //			List<Readability> allReadabilities = db.getAllReadabilityInfos();
 //			for (Readability readability : allReadabilities) {
 //				sender.saveReadabilityToServer(readability);
 //			}
+//			db.checkSenedReadability();
 		}
 	}
 
