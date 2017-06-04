@@ -44,7 +44,7 @@ public class ArrowImageCanvas extends Canvas
 	private static final String EXT=".png";
 	
 	private static final int MAX_IMAGES = 16;
-	private static final int IMG_VIEW_DELAY = 100;
+	private static final int IMG_VIEW_DELAY = 50;
 	
 	public static final int UP = 100;
 	public static final int DOWN = 200;
@@ -62,6 +62,8 @@ public class ArrowImageCanvas extends Canvas
 	private String overlayText = "+0.0";
 
 	private MeterFigure readabilityGauge;
+	
+	
 	public ArrowImageCanvas(final Composite parent, MeterFigure readabilityGauge)
 	{
 		this(parent, SWT.NULL);
@@ -74,33 +76,36 @@ public class ArrowImageCanvas extends Canvas
 		{
 			public void run()
 			{
-				for (int i = 0; i < MAX_IMAGES; i++)
+				synchronized(ArrowImageCanvas.this)
 				{
-					imageIndex = i;
-
-					try
+					for (int i = 0; i < MAX_IMAGES; i++)
 					{
-						Thread.sleep(IMG_VIEW_DELAY);
-					} 
-					catch (Throwable th)
-					{
-					}
-
-					if (getDisplay().isDisposed())
-					{
-						return;
-					}
-
-					getDisplay().asyncExec(new Runnable()
-					{
-						public void run()
+						imageIndex = i;
+	
+						try
 						{
-							if (image.isDisposed())
-								return;
-							image = currentImages[imageIndex % MAX_IMAGES];
-							redraw();
+							Thread.sleep(IMG_VIEW_DELAY);
+						} 
+						catch (Throwable th)
+						{
 						}
-					});
+	
+						if (getDisplay().isDisposed())
+						{
+							return;
+						}
+	
+						getDisplay().asyncExec(new Runnable()
+						{
+							public void run()
+							{
+								if (image.isDisposed())
+									return;
+								image = currentImages[imageIndex % MAX_IMAGES];
+								redraw();
+							}
+						});
+					}
 				}
 			}
 		}.start();
