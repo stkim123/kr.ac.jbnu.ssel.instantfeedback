@@ -23,6 +23,8 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
+import org.eclipse.swt.events.TraverseEvent;
+import org.eclipse.swt.events.TraverseListener;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
@@ -67,30 +69,32 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 		return false;
 	}
 
-	private boolean checkSemicolone(KeyEvent e) {
-		if (e.character == ';')
-			return true;
-
-		return false;
-	}
-
 	// resource change event listener 
 	class MyResourceChangeReporter implements IResourceChangeListener {
 		public void resourceChanged(IResourceChangeEvent event) {
-			if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
-				System.out.println("Resources have changed.");
-				
-				IResource resource = event.getDelta().getResource();
-				String resFullPath = resource.getFullPath().toString();
-				System.out.println("resFullPath: " + resFullPath);
-				if (resFullPath.endsWith(".java")) {
-					try {
-						event.getDelta().accept(new DeltaPrinter());
-					} catch (CoreException e) {
-						e.printStackTrace();
-					}
-				}
+			System.out.println("Resources have changed:"+ event.getType());
+			
+			if (event.getType() != IResourceChangeEvent.POST_CHANGE) {
+				return;
 			}
+				
+			IResource resource = event.getDelta().getResource();
+			ITextEditor editor = getCurrentEditor();
+			if (editor != null) {
+				computeReadiability(editor);
+			}
+			
+//			String resFullPath = resource.getFullPath().toString();
+//			String location = resource.getRawLocationURI().toString();
+//			
+//			System.out.println("resFullPath: " + resFullPath);
+//			if (resource.getType() == IResource.FILE && resource.getFileExtension().equalsIgnoreCase("java")) {
+//				try {
+//					event.getDelta().accept(new DeltaPrinter());
+//				} catch (CoreException e) {
+//					e.printStackTrace();
+//				}
+//			}
 		}
 	}
 
@@ -104,79 +108,9 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 
 					Display.getDefault().asyncExec(new Runnable() {
 						public void run() {
-							IWorkbench wb = PlatformUI.getWorkbench();
-							IWorkbenchWindow win = wb.getActiveWorkbenchWindow();
-							IWorkbenchPage page = win.getActivePage();
-							ITextEditor editor = (ITextEditor) page.getActiveEditor();
+							ITextEditor editor = getCurrentEditor();
 							if (editor != null) {
-
-								initializeDB();
-								IJavaElement javaElement = JavaUI.getEditorInputJavaElement(editor.getEditorInput());
-								if (javaElement instanceof ICompilationUnit) {
-									ITextSelection textSelection = (ITextSelection) editor.getSelectionProvider()
-											.getSelection();
-									IJavaElement selectedJavaElement = null;
-									try {
-										selectedJavaElement = ((ICompilationUnit) javaElement)
-												.getElementAt(textSelection.getOffset());
-
-										// check if the selected java element is a method
-										if (selectedJavaElement != null
-												&& selectedJavaElement.getElementType() == IJavaElement.METHOD) {
-											String className = selectedJavaElement.getParent().getElementName();
-											String currentMethodCode = ((IMethod) selectedJavaElement).getSource()
-													+ "}";
-
-											logger.info("Current method code: " + currentMethodCode);
-											// check if the method source is changed compared to previous revision.
-											if (checkIftheMethodisChanged(currentMethodCode)) {
-												FeatureExtractor extractor = new FeatureExtractor();
-
-												logger.info("Feature extraction start");
-												// extract features
-												Features features = extractor.extractFeatures(currentMethodCode);
-												features.setClassName(className);
-												logger.info("Extracted features: " + "LOC: " + features.getLOC()
-														+ ", numOfMethodInvocation: "
-														+ features.getNumOfMethodInvocation() + ", numOfBranch: "
-														+ features.getNumOfBranch() + ", numOfLoops: "
-														+ features.getNumOfLoops() + ", numOfAssignment: "
-														+ features.getNumOfAssignment() + ", numOfComments: "
-														+ features.getNumOfComments() + ", ofArithmaticOperators: "
-														+ features.getNumOfArithmaticOperators() + ", numOfBlankLines: "
-														+ features.getNumOfBlankLines() + ", numOfStringLiteral: "
-														+ features.getNumOfStringLiteral() + ", numOfLogicalOperators: "
-														+ features.getNumOfLogicalOperators() + ", numOfBitOperators: "
-														+ features.getNumOfBitOperators() + ", maxNestedControl: "
-														+ features.getMaxNestedControl() + ", programVolume: "
-														+ features.getProgramVolume() + ", entropy: "
-														+ features.getEntropy() + ", averageOfVariableNameLength: "
-														+ features.getAverageOfVariableNameLength()
-														+ ", averageLineLength: " + features.getAverageLineLength()
-														+ ", patternRate: " + features.getPatternRate());
-
-												Readability readability = new Readability();
-												readability.setFeatures(features);
-												readability.setClassName(className);
-												readability.calculateReadability();
-
-												User user = db.getCurrentUser();
-												readability.setUser(user);
-
-												logger.info("Readability data is saved in db");
-												db.storeReadability(readability);
-
-												// store current method code for later comparison.
-												previousMethodCode = currentMethodCode;
-
-												// request to invalidate the Gauge view and Timeline view.
-												invalidateViews(readability);
-											}
-										}
-									} catch (JavaModelException e) {
-										e.printStackTrace();
-									}
-								}
+								computeReadiability(editor);
 							}
 						}
 
@@ -226,91 +160,14 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 
 		ITextEditor editor = getCurrentEditor();
 		if (editor != null) {
+			
+			// The following is for capturing the ENTER key event.
 			((StyledText) editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addKeyListener(new KeyListener() {
 				@Override
 				public void keyReleased(KeyEvent e) {
-					if (checkEnterKey(e)
-//							|| checkSemicolone(e)
-							){
+					if (checkEnterKey(e)){
 						logger.info("View update start");
-						Display.getDefault().asyncExec(new Runnable() {
-							public void run() {
-								initializeDB();
-								IJavaElement javaElement = JavaUI.getEditorInputJavaElement(editor.getEditorInput());
-								if (javaElement instanceof ICompilationUnit) {
-									ITextSelection textSelection = (ITextSelection) editor.getSelectionProvider()
-											.getSelection();
-									IJavaElement selectedJavaElement = null;
-									try {
-										selectedJavaElement = ((ICompilationUnit) javaElement)
-												.getElementAt(textSelection.getOffset());
-
-										// check if the selected java element is a method
-										if (selectedJavaElement != null
-												&& selectedJavaElement.getElementType() == IJavaElement.METHOD) {
-											String className = selectedJavaElement.getParent().getElementName();
-											String packageName = selectedJavaElement.getParent().getParent().getParent().getElementName();
-											String methodFullString = selectedJavaElement.toString();
-											String methodSignature = methodFullString.split(" \\[")[0];
-											
-											String currentMethodCode = ((IMethod) selectedJavaElement).getSource()
-													+ "}";
-
-											logger.info("Current method code: " + currentMethodCode);
-											// check if the method source is changed compared to previous revision.
-											if (checkIftheMethodisChanged(currentMethodCode)) {
-												FeatureExtractor extractor = new FeatureExtractor();
-
-												logger.info("Feature extraction start");
-												// extract features
-												Features features = extractor.extractFeatures(currentMethodCode);
-												features.setClassName(className);
-												logger.info("Extracted features: " + "LOC: " + features.getLOC()
-														+ ", numOfMethodInvocation: "
-														+ features.getNumOfMethodInvocation() + ", numOfBranch: "
-														+ features.getNumOfBranch() + ", numOfLoops: "
-														+ features.getNumOfLoops() + ", numOfAssignment: "
-														+ features.getNumOfAssignment() + ", numOfComments: "
-														+ features.getNumOfComments() + ", ofArithmaticOperators: "
-														+ features.getNumOfArithmaticOperators() + ", numOfBlankLines: "
-														+ features.getNumOfBlankLines() + ", numOfStringLiteral: "
-														+ features.getNumOfStringLiteral() + ", numOfLogicalOperators: "
-														+ features.getNumOfLogicalOperators() + ", numOfBitOperators: "
-														+ features.getNumOfBitOperators() + ", maxNestedControl: "
-														+ features.getMaxNestedControl() + ", programVolume: "
-														+ features.getProgramVolume() + ", entropy: "
-														+ features.getEntropy() + ", averageOfVariableNameLength: "
-														+ features.getAverageOfVariableNameLength()
-														+ ", averageLineLength: " + features.getAverageLineLength()
-														+ ", patternRate: " + features.getPatternRate());
-
-												Readability readability = new Readability();
-												readability.setFeatures(features);
-												readability.setClassName(className);
-												readability.calculateReadability();
-												readability.setMethodSignature(methodSignature);
-												readability.setPackageName(packageName);
-
-												User user = db.getCurrentUser();
-												readability.setUser(user);
-
-												logger.info("Readability data is saved in db");
-												db.storeReadability(readability);
-
-												// store current method code for later comparison.
-												previousMethodCode = currentMethodCode;
-
-												// request to invalidate the Gauge view and Timeline view.
-												invalidateViews(readability);
-											}
-										}
-									} catch (JavaModelException e) {
-										e.printStackTrace();
-									}
-								}
-							}
-
-						});
+						computeReadiability(editor);
 					}
 				}
 
@@ -319,6 +176,7 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 				}
 			});
 		
+			// The following is for capturing the mouse enter and caret moving events
 			((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addMouseListener(new MouseListener()
 			{
 				
@@ -345,6 +203,84 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 					showGaugeNTimelineViewOfCurrentMethod();
 				}
 			});
+		}
+	}
+	
+	
+	private void computeReadiability(ITextEditor editor)
+	{
+		initializeDB();
+		IJavaElement javaElement = JavaUI.getEditorInputJavaElement(editor.getEditorInput());
+		if (javaElement instanceof ICompilationUnit) {
+			ITextSelection textSelection = (ITextSelection) editor.getSelectionProvider()
+					.getSelection();
+			IJavaElement selectedJavaElement = null;
+			try {
+				selectedJavaElement = ((ICompilationUnit) javaElement)
+						.getElementAt(textSelection.getOffset());
+
+				// check if the selected java element is a method
+				if (selectedJavaElement != null
+						&& selectedJavaElement.getElementType() == IJavaElement.METHOD) {
+					String className = selectedJavaElement.getParent().getElementName();
+					String packageName = selectedJavaElement.getParent().getParent().getParent().getElementName();
+					String methodFullString = selectedJavaElement.toString();
+					String methodSignature = methodFullString.split(" \\[")[0];
+					
+					String currentMethodCode = ((IMethod) selectedJavaElement).getSource()
+							+ "}";
+
+					logger.info("Current method code: " + currentMethodCode);
+					// check if the method source is changed compared to previous revision.
+					if (checkIftheMethodisChanged(currentMethodCode)) {
+						FeatureExtractor extractor = new FeatureExtractor();
+
+						logger.info("Feature extraction start");
+						// extract features
+						Features features = extractor.extractFeatures(currentMethodCode);
+						features.setClassName(className);
+						logger.info("Extracted features: " + "LOC: " + features.getLOC()
+								+ ", numOfMethodInvocation: "
+								+ features.getNumOfMethodInvocation() + ", numOfBranch: "
+								+ features.getNumOfBranch() + ", numOfLoops: "
+								+ features.getNumOfLoops() + ", numOfAssignment: "
+								+ features.getNumOfAssignment() + ", numOfComments: "
+								+ features.getNumOfComments() + ", ofArithmaticOperators: "
+								+ features.getNumOfArithmaticOperators() + ", numOfBlankLines: "
+								+ features.getNumOfBlankLines() + ", numOfStringLiteral: "
+								+ features.getNumOfStringLiteral() + ", numOfLogicalOperators: "
+								+ features.getNumOfLogicalOperators() + ", numOfBitOperators: "
+								+ features.getNumOfBitOperators() + ", maxNestedControl: "
+								+ features.getMaxNestedControl() + ", programVolume: "
+								+ features.getProgramVolume() + ", entropy: "
+								+ features.getEntropy() + ", averageOfVariableNameLength: "
+								+ features.getAverageOfVariableNameLength()
+								+ ", averageLineLength: " + features.getAverageLineLength()
+								+ ", patternRate: " + features.getPatternRate());
+
+						Readability readability = new Readability();
+						readability.setFeatures(features);
+						readability.setClassName(className);
+						readability.calculateReadability();
+						readability.setMethodSignature(methodSignature);
+						readability.setPackageName(packageName);
+
+						User user = db.getCurrentUser();
+						readability.setUser(user);
+
+						logger.info("Readability data is saved in db");
+						db.storeReadability(readability);
+
+						// store current method code for later comparison.
+						previousMethodCode = currentMethodCode;
+
+						// request to invalidate the Gauge view and Timeline view.
+						invalidateViews(readability);
+					}
+				}
+			} catch (JavaModelException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -486,10 +422,20 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 	}
 	
 	private ITextEditor getCurrentEditor() {
+		ITextEditor editor = null;
 		IWorkbench wb = PlatformUI.getWorkbench();
-		IWorkbenchWindow win = wb.getActiveWorkbenchWindow();
-		IWorkbenchPage page = win.getActivePage();
-		ITextEditor editor = (ITextEditor) page.getActiveEditor();
+		if(wb != null )
+		{
+			IWorkbenchWindow win = wb.getActiveWorkbenchWindow();
+			if( win != null)
+			{
+				IWorkbenchPage page = win.getActivePage();
+				if( page != null)
+				{
+					editor = (ITextEditor) page.getActiveEditor();
+				}
+			}
+		}
 		return editor;
 	}
 }
