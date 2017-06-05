@@ -69,7 +69,7 @@ public class GaugeView extends ViewPart
 		
 		//////////////////////////////////////////////////////////////////////
 		swtImgCanvas= new ArrowImageCanvas(sashForm,readabilityGauge);
-		swtImgCanvas.setArrowNText(ArrowImageCanvas.UP, "+0.3");
+		swtImgCanvas.setArrowNText(0.01);
 		
 		sashForm.setWeights(new int[] {1, 4, 2});
 	}
@@ -99,22 +99,11 @@ public class GaugeView extends ViewPart
 		}
 		
 		double gap = readability.getReadability() - previousReadability;
-		int direction = ArrowImageCanvas.UP;
-		String sign = "";
 		
-		if( gap >= 0)
-		{
-			direction = ArrowImageCanvas.UP;
-			sign = "+";
-		}
-		else
-		{
-			direction = ArrowImageCanvas.DOWN;
-		}
+		swtImgCanvas.setArrowNText(gap);
 		
-		swtImgCanvas.setArrowNText(direction, sign + " " +  String.format("%.2f", gap));
-		previousReadability = readability.getReadability();
-		logger.info("Invalidating GaugeView is completed");
+		logger.info("Invalidating GaugeView is completed");	
+
 	}
 	
 	public void showGauge(Readability readability)
@@ -140,10 +129,7 @@ public class GaugeView extends ViewPart
 		}
 		
 		double gap = 0.0;
-		int direction = ArrowImageCanvas.UP;
-		String sign = "";
-		
-		swtImgCanvas.setArrowNText(direction, sign + " " +  String.format("%.2f", gap));
+		swtImgCanvas.setArrowNText(gap);
 		previousReadability = readability.getReadability();
 		logger.info("Showing GaugeView is completed");
 	}

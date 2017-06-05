@@ -213,7 +213,30 @@ public class ArrowImageCanvas extends Canvas
 		gc.drawText(overlayText, startImgX + IMG_CENTER_LEFT_MARGIN, startTextY, SWT.DRAW_TRANSPARENT);
 	}
 
-	public void setArrowNText(int direction, String text)
+	public void setArrowNText(double gap)
+	{
+		int direction = ArrowImageCanvas.UP;
+		String sign = "";
+		
+		System.out.println("gap:"+ gap);
+		
+		if( gap > 0)
+		{
+			direction = ArrowImageCanvas.UP;
+			sign = "+";
+		}
+		else if( gap < 0)
+		{
+			direction = ArrowImageCanvas.DOWN;
+		}
+		
+		if(gap != 0)
+		{
+			setArrowNText(direction, sign + " " +  String.format("%.2f", gap));
+		}
+	}
+	
+	private void setArrowNText(int direction, String text)
 	{
 		this.direction = direction;
 		if( direction == UP)

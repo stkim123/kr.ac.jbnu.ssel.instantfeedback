@@ -53,6 +53,7 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 	private DBConnector db;
 	private String previousMethodCode;
 	private boolean isDBStartUp = false;
+	private IMethod previouslyShowingMethod;
 
 	/**
 	 * The constructor
@@ -77,8 +78,11 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 	class MyResourceChangeReporter implements IResourceChangeListener {
 		public void resourceChanged(IResourceChangeEvent event) {
 			if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
+				System.out.println("Resources have changed.");
+				
 				IResource resource = event.getDelta().getResource();
 				String resFullPath = resource.getFullPath().toString();
+				System.out.println("resFullPath: " + resFullPath);
 				if (resFullPath.endsWith(".java")) {
 					try {
 						event.getDelta().accept(new DeltaPrinter());
@@ -86,16 +90,6 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 						e.printStackTrace();
 					}
 				}
-			}
-			try {
-				switch (event.getType()) {
-				case IResourceChangeEvent.POST_CHANGE:
-					System.out.println("Resources have changed.");
-					event.getDelta().accept(new DeltaPrinter());
-					break;
-				}
-			} catch (CoreException e) {
-				e.printStackTrace();
 			}
 		}
 	}
@@ -228,20 +222,16 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 
 		// The following is for capturing save/refactoring events
 		IResourceChangeListener listener = new MyResourceChangeReporter();
-		ResourcesPlugin.getWorkspace().addResourceChangeListener(listener,
-				// IResourceChangeEvent.PRE_CLOSE
-				// | IResourceChangeEvent.PRE_DELETE
-				// | IResourceChangeEvent.PRE_BUILD
-				// | IResourceChangeEvent.POST_BUILD
-				// | IResourceChangeEvent.POST_CHANGE);
-				IResourceChangeEvent.POST_CHANGE);
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(listener, IResourceChangeEvent.POST_CHANGE);
 
 		ITextEditor editor = getCurrentEditor();
 		if (editor != null) {
 			((StyledText) editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addKeyListener(new KeyListener() {
 				@Override
 				public void keyReleased(KeyEvent e) {
-					if (checkEnterKey(e) || checkSemicolone(e)) {
+					if (checkEnterKey(e)
+//							|| checkSemicolone(e)
+							){
 						logger.info("View update start");
 						Display.getDefault().asyncExec(new Runnable() {
 							public void run() {
@@ -328,34 +318,34 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 				public void keyPressed(KeyEvent arg0) {
 				}
 			});
+		
+			((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addMouseListener(new MouseListener()
+			{
+				
+				@Override
+				public void mouseUp(MouseEvent arg0){}
+				{
+				}
+				
+				@Override
+				public void mouseDown(MouseEvent arg0)
+				{
+					showGaugeNTimelineViewOfCurrentMethod();
+				}
+				
+				@Override
+				public void mouseDoubleClick(MouseEvent arg0){}
+			});
+			
+			((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addCaretListener(new CaretListener()
+			{
+				@Override
+				public void caretMoved(CaretEvent arg0)
+				{
+					showGaugeNTimelineViewOfCurrentMethod();
+				}
+			});
 		}
-		
-		((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addMouseListener(new MouseListener()
-		{
-			
-			@Override
-			public void mouseUp(MouseEvent arg0){}
-			{
-			}
-			
-			@Override
-			public void mouseDown(MouseEvent arg0)
-			{
-				showGaugeNTimelineViewOfCurrentMethod();
-			}
-			
-			@Override
-			public void mouseDoubleClick(MouseEvent arg0){}
-		});
-		
-		((StyledText)editor.getAdapter(org.eclipse.swt.widgets.Control.class)).addCaretListener(new CaretListener()
-		{
-			@Override
-			public void caretMoved(CaretEvent arg0)
-			{
-				showGaugeNTimelineViewOfCurrentMethod();
-			}
-		});
 	}
 	
 	private void showGaugeNTimelineViewOfCurrentMethod()
@@ -373,21 +363,30 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 					IJavaElement selected = ((ICompilationUnit) elem).getElementAt(sel.getOffset());
 					if (selected != null && selected.getElementType() == IJavaElement.METHOD) {
 						currentMethod = (IMethod) selected;
-						String methodName = currentMethod.getElementName();
-						String className = selected.getParent().getElementName();
-						String packageName = selected.getParent().getParent().getParent().getElementName();
-						String methodFullString = selected.toString();
-						String methodSignature = methodFullString.split(" \\[")[0];
 						
-						User user = db.getCurrentUser();
-						Readability readability = new Readability();
+						if(previouslyShowingMethod != null)
+						{
+							if( currentMethod != previouslyShowingMethod)
+							{
+								String methodName = currentMethod.getElementName();
+								String className = selected.getParent().getElementName();
+								String packageName = selected.getParent().getParent().getParent().getElementName();
+								String methodFullString = selected.toString();
+								String methodSignature = methodFullString.split(" \\[")[0];
+								
+								User user = db.getCurrentUser();
+								Readability readability = new Readability();
+								
+								readability.setMethodName(methodName);
+								readability.setClassName(className);
+								readability.setPackageName(packageName);
+								readability.setMethodSignature(methodSignature);
+								readability.setUser(user);
+								showViews(readability);
+							}
+						}
 						
-						readability.setMethodName(methodName);
-						readability.setClassName(className);
-						readability.setPackageName(packageName);
-						readability.setMethodSignature(methodSignature);
-						readability.setUser(user);
-						showViews(readability);
+						previouslyShowingMethod = currentMethod; 
 					}
 				}
 			}
