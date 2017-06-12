@@ -1,5 +1,7 @@
 package kr.ac.jbnu.ssel.instantfeedback;
 
+import javax.swing.plaf.synth.SynthSeparatorUI;
+
 import org.apache.log4j.Logger;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -299,16 +301,16 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 					IJavaElement selected = ((ICompilationUnit) elem).getElementAt(sel.getOffset());
 					if (selected != null && selected.getElementType() == IJavaElement.METHOD) {
 						currentMethod = (IMethod) selected;
+						String methodFullString = selected.toString();
+						String methodSignature = methodFullString.split(" \\[")[0];
 						
 						if(previouslyShowingMethod != null)
 						{
-							if( currentMethod != previouslyShowingMethod)
+							if(!checkIsSameMethod(methodSignature))
 							{
 								String methodName = currentMethod.getElementName();
 								String className = selected.getParent().getElementName();
 								String packageName = selected.getParent().getParent().getParent().getElementName();
-								String methodFullString = selected.toString();
-								String methodSignature = methodFullString.split(" \\[")[0];
 								
 								User user = db.getCurrentUser();
 								Readability readability = new Readability();
@@ -318,11 +320,12 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 								readability.setPackageName(packageName);
 								readability.setMethodSignature(methodSignature);
 								readability.setUser(user);
+								
 								showViews(readability);
+								
+								previouslyShowingMethod = currentMethod;
 							}
 						}
-						
-						previouslyShowingMethod = currentMethod; 
 					}
 				}
 			}
@@ -387,6 +390,16 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 			return false;
 
 		return true;
+	}
+	
+	private boolean checkIsSameMethod(String methodSignatrue){
+		String preMethodFullString = previouslyShowingMethod.toString();
+		String preMethodSignature = preMethodFullString.split(" \\[")[0];
+		
+		if(preMethodSignature.equals(methodSignatrue))
+			return true;
+		
+		return false;
 	}
 
 	/*
