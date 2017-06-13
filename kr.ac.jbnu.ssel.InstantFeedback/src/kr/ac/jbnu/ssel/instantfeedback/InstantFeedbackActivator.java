@@ -74,13 +74,12 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 	// resource change event listener 
 	class MyResourceChangeReporter implements IResourceChangeListener {
 		public void resourceChanged(IResourceChangeEvent event) {
-			System.out.println("Resources have changed:"+ event.getType());
-			
 			if (event.getType() != IResourceChangeEvent.POST_CHANGE) {
 				return;
 			}
+			
+			System.out.println("Resources have changed:"+ event.getType());
 				
-			IResource resource = event.getDelta().getResource();
 			ITextEditor editor = getCurrentEditor();
 			if (editor != null) {
 				computeReadiability(editor);
@@ -304,8 +303,6 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 						String methodFullString = selected.toString();
 						String methodSignature = methodFullString.split(" \\[")[0];
 						
-						if(previouslyShowingMethod != null)
-						{
 							if(!checkIsSameMethod(methodSignature))
 							{
 								String methodName = currentMethod.getElementName();
@@ -325,7 +322,6 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 								
 								previouslyShowingMethod = currentMethod;
 							}
-						}
 					}
 				}
 			}
@@ -393,6 +389,9 @@ public class InstantFeedbackActivator extends AbstractUIPlugin {
 	}
 	
 	private boolean checkIsSameMethod(String methodSignatrue){
+		if(previouslyShowingMethod == null)
+			return false;
+		
 		String preMethodFullString = previouslyShowingMethod.toString();
 		String preMethodSignature = preMethodFullString.split(" \\[")[0];
 		

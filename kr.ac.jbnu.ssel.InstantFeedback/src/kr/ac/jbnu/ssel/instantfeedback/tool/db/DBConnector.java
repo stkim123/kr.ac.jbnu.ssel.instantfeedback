@@ -255,10 +255,11 @@ public class DBConnector {
 					+ "' and classname='" + readability.getClassName()
 					+ "' and methodname='" + readability.getMethodName()
 					+ "' and methodsignature='" + readability.getMethodSignature()
-					+ "' ORDER BY id DESC");
+					+ "' ORDER BY storedTime");
 			
 			if(rs.next() && rs.next()){
 				readabilityInfo = new Readability();
+				readabilityInfo.setMethodSignature(rs.getString("methodsignature"));
 				readabilityInfo.setReadability(rs.getDouble("readability"));
 			}
 		} catch (SQLException e) {

@@ -79,7 +79,7 @@ public class GaugeView extends ViewPart
 
 	}
 	
-	double previousReadability = 0;
+	Readability previousReadability;
 	
 	public void invalidate(Readability readability)
 	{
@@ -91,19 +91,34 @@ public class GaugeView extends ViewPart
 			}
 		});
 		
-		if(previousReadability == 0)
-		{
-			Readability prevReadability = db.getLastReadability(readability);
-			if(prevReadability != null)
-				previousReadability = prevReadability.getReadability(); 
-		}
-		
-		double gap = readability.getReadability() - previousReadability;
+		double gap = calculateGap(readability);
 		
 		swtImgCanvas.setArrowNText(gap);
-		
 		logger.info("Invalidating GaugeView is completed");	
+	}
 
+	private double calculateGap(Readability readability) {
+		double gap = 0.0;
+		
+		if(previousReadability == null)
+		{
+			previousReadability = db.getLastReadability(readability);
+		}
+		
+		if(checkIsSameMethod(readability)) {
+			gap = readability.getReadability() - previousReadability.getReadability();
+		}
+		
+		previousReadability = readability;
+		return gap;
+	}
+	
+	private boolean checkIsSameMethod(Readability currentReadability){
+		String preMethodSignature = previousReadability.getMethodSignature();
+		if(preMethodSignature.equals(currentReadability.getMethodSignature()))
+			return true;
+		
+		return false;
 	}
 	
 	public void showGauge(Readability readability)
@@ -121,16 +136,9 @@ public class GaugeView extends ViewPart
 			}
 		});
 		
-		if(previousReadability == 0)
-		{
-			Readability prevReadability = db.getLastReadability(readability);
-			if(prevReadability != null)
-				previousReadability = prevReadability.getReadability(); 
-		}
 		
 		double gap = 0.0;
 		swtImgCanvas.setArrowNText(gap);
-		previousReadability = readability.getReadability();
 		logger.info("Showing GaugeView is completed");
 	}
 
