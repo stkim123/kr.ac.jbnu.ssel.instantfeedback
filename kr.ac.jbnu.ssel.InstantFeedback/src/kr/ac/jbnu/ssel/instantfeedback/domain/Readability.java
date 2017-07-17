@@ -161,11 +161,12 @@ public class Readability {
 		this.patternRate = patternRate;
 	}
 
-	@Override
-	public String toString()
-	{
-		return className + "." + methodName; 
-	}
+//	@Override
+//	public String toString()
+//	{
+//		return className + "." + methodName; 
+//	}
+	
 	
 	public void setFeatures(Features features){
 		setLOC(features.getLOC());
@@ -183,11 +184,25 @@ public class Readability {
 		DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
 		Date currentDate = new Date();
 		setStoredTime(currentDate);
+		
+		calculateReadability();
 	}
 	
+	@Override
+	public String toString() {
+		return "Readability [id=" + id + ", LOC=" + LOC + ", numOfComments=" + numOfComments + ", numOfBlankLines="
+				+ numOfBlankLines + ", numOfBitOperators=" + numOfBitOperators + ", maxNestedControl="
+				+ maxNestedControl + ", patternRate=" + patternRate + ", programVolume=" + programVolume + ", entropy="
+				+ entropy + ", readability=" + readability + ", storedTime=" + storedTime + ", methodName=" + methodName
+				+ ", className=" + className + ", packageName=" + packageName + ", methodSignature=" + methodSignature
+				+ ", user=" + user + "]";
+	}
+
 	public void calculateReadability(){
 		readability = 7.422 + (-0.020)*LOC + 0.040*numOfComments + 0.037*numOfBlankLines
 				+ (-0.755)*numOfBitOperators + (-0.153)*maxNestedControl + (-0.001)*programVolume
 				+ (-0.610)*entropy;
+		System.out.println("-------------current features---------------" );
+		System.out.println(toString());
 	}
 }
