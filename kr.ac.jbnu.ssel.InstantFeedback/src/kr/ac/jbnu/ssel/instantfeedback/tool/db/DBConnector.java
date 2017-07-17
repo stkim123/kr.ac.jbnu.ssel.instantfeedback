@@ -64,8 +64,8 @@ public class DBConnector {
 			createDefaultUser();
 			
 			stmt.execute("CREATE TABLE IF NOT EXISTS readability ( id INTEGER NOT NULL IDENTITY"
-					+ ",LOC INTEGER DEFAULT NULL, "
-					+ "numOfComments INTEGER DEFAULT NULL"
+					+ ",LOC INTEGER DEFAULT NULL"
+					+ ",numOfComments INTEGER DEFAULT NULL"
 					+ ",numOfBlankLines INTEGER DEFAULT NULL"
 					+ ",numOfBitOperators INTEGER DEFAULT NULL"
 					+ ",readability double DEFAULT NULL"
@@ -100,14 +100,7 @@ public class DBConnector {
 		if(user != null)
 			return;
 		
-		user = new User();
-		user.setUsername("test");
-		user.setAge(1);
-		user.setArea("test");
-		user.setJavaExpierence(1);
-		user.setExpierence(1);
-		user.setCreatedDate(new Date());
-		user.setSended(true);
+		user = getDefaultUser();
 		
 		InetAddress ip;
 		StringBuilder macString = new StringBuilder("");
@@ -130,6 +123,18 @@ public class DBConnector {
 		user.setMacAddress(macString.toString());
 		
 		saveUserData(user);
+	}
+
+	private User getDefaultUser() {
+		User user = new User();
+		user.setUsername("test");
+		user.setAge(1);
+		user.setArea("test");
+		user.setJavaExpierence(1);
+		user.setExpierence(1);
+		user.setCreatedDate(new Date());
+		user.setSended(true);
+		return user;
 	}
 
 	private PrintWriter createLogWriter(String logFileName, boolean append, boolean autoFlush) throws IOException {
@@ -485,6 +490,8 @@ public class DBConnector {
 				result.setExpierence(rs.getInt("expierence"));
 				result.setJavaExpierence(rs.getInt("javaexpierence"));
 				result.setMacAddress(rs.getString("macAddress"));
+			} else{
+				result = getDefaultUser();
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
